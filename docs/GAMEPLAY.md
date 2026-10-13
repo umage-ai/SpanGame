@@ -18,7 +18,7 @@ The top bar shows the cost/budget bar (with ★★★ and ★★ thresholds) and
 - A new joint that lands on an existing beam joins it: the beam is split there. So a strut that stops on the road is connected to the road.
 - Joints must stay at least 0.5 m clear of the ground (only anchors and piers bear on rock), and beams may not pass through it.
 - **Building on the banks.** Some crossings have *inland anchors*: concrete deadman blocks buried in a bank top, or anchor blocks set into a hillside behind the road, each with a steel bolt plate where members attach. Their *land pier zones* (striped on the bank) take **land pylons**: concrete towers on a footing that the road passes through. A land pylon is not a fixed point like a pier in the valley: its footing only resists a small push, so a pylon pulled by its stays must be **guyed back** with a backstay to an inland anchor behind it, or it topples. On these levels the bank road also has a **clearance envelope** (the amber "keep clear" band, as tall as the tallest vehicle plus 0.5 m): no joint or member may go inside it (a deck lying on the road surface is fine), except rope and cable stays that end at an inland anchor - they run beside the road into their anchorage. A strut, a ramp or a steel bar through the traffic is refused. The editor marks a violating beam red and says "Keep the road clear".
-- **Road** and **reinforced road** are what vehicles drive on. The road must run continuously from bank to bank, and it bends at its joints: it needs a supported joint (a strut, hanger or chord) about every 5–6 m. **Wood** and **steel** are structural members. **Rope** and **cable** only carry tension. Pier tops are rigid concrete supports.
+- **Road** and **reinforced road** are what vehicles drive on. The road must run continuously from bank to bank, and it bends at its joints: it needs a supported joint (a strut, hanger or chord) about every 5–6 m. **Wood** and **steel** are structural members. **Rope** and **cable** only carry tension. Pier tops are rigid concrete supports. In the Jungle chapter, **Walkway** is the deck, **Bamboo** a light strut and **Liana** a cheap, weak tension member.
 
 ### Testing
 
@@ -79,7 +79,7 @@ Every mode works by touch. On phones the **Goals** panel opens from its top-bar 
 
 ## Levels
 
-Roads: 50 levels in 6 chapters, plus two hidden bonus chapters (the level select groups them the same way):
+Roads: 50 levels in 6 chapters, plus three hidden bonus chapters (the level select groups them the same way):
 
 | Chapter | Levels | Gaps | Traffic | Introduces |
 |---|---|---|---|---|
@@ -102,7 +102,7 @@ Roads: 50 levels in 6 chapters, plus two hidden bonus chapters (the level select
 
 **Grand Spans:** 41 Cold Open (100 m) · 42 Twin Channels (105 m) · 43 Monsoon Stays (115 m) · 44 Moonlit Crescent (120 m) · 45 Caldera Cantilever (125 m) · 46 Avalanche Arch (130 m) · 47 Paradise Suspended (140 m) · 48 Flight Path (135 m) · 49 The Long Night (145 m) · 50 Magnum Opus (150 m)
 
-The hidden bonus chapters **7 Forces of Nature** (51–53) and **8 Anchorages** (54–58) are described below.
+The hidden bonus chapters **7 Forces of Nature** (51–53), **8 Anchorages** (54–58) and **9 Jungle** (59–68) are described below.
 
 Every level is verified by `node tools/verify-levels.js` against two designs in `tools/solutions/`:
 
@@ -166,6 +166,23 @@ Finishing level 40 reveals a hidden eighth chapter about structures that stand o
 
 The reference design of 57 stands its towers in the river; every best design uses land pylons. Without their backstays the best designs lose their pylons (checked by `tools/test-anchors.js`, which also checks that no template earns ★★★ here).
 
+### Jungle (bonus chapter, levels 59–68)
+
+Finishing level 30 reveals a hidden ninth chapter of light jungle crossings (spec: [docs/jungle/SPEC-JUNGLE.md](jungle/SPEC-JUNGLE.md)). Like Anchorages it branches off the Roads: completing 30 opens 59, the usual either-of-the-two-before rule applies inside, and nothing in it blocks the Roads. The deck is a **Walkway** (a light plank deck that only foot traffic and small carts may use). **Bamboo** is a cheap, light strut that buckles early; **Liana** is the cheapest tension member and weaker than rope. Giant trees and temple ruins serve as anchors, canoe channels must stay clear, a waterfall forbids building in its curtain, and level 66 brings a monsoon wind. The travellers are monkeys, porters, hand carts, an ox cart and a jeep.
+
+| Level | Gap | The idea |
+|---|---|---|
+| 59 Monkey Bridge | 14 m | A sagging walkway alone is a rope bridge; liana from the trees steadies it. |
+| 60 Porter's Path | 20 m | Bamboo arrives: a light truss under the deck carries the hand cart. |
+| 61 Canopy Walk | 30 m | Hang the walkway from three giant trees. |
+| 62 Canoe Crossing | 32 m | Keep the canoe channel clear: an arch or a fan from the trees. |
+| 63 Market Day | 24 m | An ox cart: a bamboo truss under the deck, wood where it is squeezed hardest. |
+| 64 Temple Causeway | 42 m | Three spans between the bank and two ruins. |
+| 65 Thundering Falls | 36 m | Jump the waterfall with stays fanned from the trees. |
+| 66 Monsoon | 34 m | Wind lifts a hung walkway; tie it down from below. |
+| 67 Supply Run | 44 m | The jeep: one low pier and a shallow truss. |
+| 68 Source of the Nile | 56 m | The finale: a through-arch from the temple ruins, and someone to meet on the far bank. |
+
 ### Famous Bridges (levels 201–212)
 
 A separate campaign of real bridges, scaled down but faithful: each crossing keeps the real bridge's proportions, pier positions, shipping channel and kind of traffic, and is set up so that the historical structural type is the natural answer. Before each level a **history card** shows when and where it was built, its engineers, span and type, three facts, and why it matters (the bridge icon in the top bar opens it again). Pick a bridge from the **Famous Bridges** tab on the level select (the third campaign tab, after Roads and Iron Road). It opens when road level 15 is complete; after that the usual rule applies (either of the two previous famous bridges; only the last one, the finale, can't be skipped).
@@ -189,7 +206,7 @@ Levels use ids 201+ and `campaign: 'famous'` (`tools/levels/level-2NN.json`, sol
 
 ### Campaigns, tabs and the title screen
 
-The level select has one tab per campaign: **Roads** (1–50, plus the hidden *Forces of Nature* chapter 51–53 once 50 is done and the hidden *Anchorages* chapter 54–58 once 40 is done), **Iron Road** (101–120, opens after road level 10) and **Famous Bridges** (201–212, opens after road level 15). The rules live in one table, `BG.Storage.CAMPAIGNS` (unlock level, final id, the bonus chapter's end), and every campaign follows them the same way: a level opens when either of the two playable levels before it in its campaign is complete, but never past an unfinished chapter finale (the `gates`: road 5, 10, 20, 30, 40, 50, rail 105, 110, 115, 120, and each campaign's last level; players who already had levels open past one keep them), **Next** stays inside the campaign, and each campaign has its own finale (after 50, after the bonus level 53, after 120 and after 212). `BG.Hud` draws the tabs from its own table of looks; a feature adds a campaign with `BG.Hud.registerCampaign(id, {...})` (Famous Bridges does). **Continue** on the title screen resumes the last level played in any campaign, or the next open level of that campaign (then of the others). The title screen also has the **Daily Challenge** and **Endless** buttons; both keep their results apart from the campaigns.
+The level select has one tab per campaign: **Roads** (1–50, plus the hidden *Forces of Nature* chapter 51–53 once 50 is done and the hidden *Anchorages* chapter 54–58 once 40 is done, and the hidden *Jungle* chapter 59–68 once 30 is done), **Iron Road** (101–120, opens after road level 10) and **Famous Bridges** (201–212, opens after road level 15). The rules live in one table, `BG.Storage.CAMPAIGNS` (unlock level, final id, the bonus chapter's end), and every campaign follows them the same way: a level opens when either of the two playable levels before it in its campaign is complete, but never past an unfinished chapter finale (the `gates`: road 5, 10, 20, 30, 40, 50, rail 105, 110, 115, 120, and each campaign's last level; players who already had levels open past one keep them), **Next** stays inside the campaign, and each campaign has its own finale (after 50, after the bonus level 53, after 120 and after 212). `BG.Hud` draws the tabs from its own table of looks; a feature adds a campaign with `BG.Hud.registerCampaign(id, {...})` (Famous Bridges does). **Continue** on the title screen resumes the last level played in any campaign, or the next open level of that campaign (then of the others). The title screen also has the **Daily Challenge** and **Endless** buttons; both keep their results apart from the campaigns.
 
 ## How the daily levels are made
 

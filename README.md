@@ -15,7 +15,7 @@ SPAN is a physics bridge-construction puzzle game. You build a bridge across a g
 
 It is plain HTML, CSS and JavaScript: no build step, no frameworks, no runtime dependencies. Open `index.html` and it runs, even straight from `file://`.
 
-- **90 hand-made levels** in three campaigns: Roads (with two hidden bonus chapters), the Iron Road railway campaign and Famous Bridges.
+- **100 hand-made levels** in three campaigns: Roads (with three hidden bonus chapters), the Iron Road railway campaign and Famous Bridges.
 - **A new crossing every day**, the same for everyone, plus an Endless mode. Every generated level is proven solvable before you see it.
 - **Plays anywhere:** mouse and keyboard, or touch on phones and tablets. Install it as an app and it works offline.
 
@@ -82,7 +82,7 @@ Twelve real crossings, scaled down but faithful, from the Pont du Gard to the Go
 |---|---|
 | ![An M8 earthquake breaks up a deck-arch bridge with a bus on it; the banks crack](docs/screenshots/quake.jpg) | ![Hurricane-force headwind and rain over a cable-stayed bridge](docs/screenshots/wind.jpg) |
 
-Finishing the Roads reveals a bonus chapter where the weather fights back: a hurricane that lifts light decks, an M8 earthquake whose ground wave reaches the far bank later than the near one, and a resonant wind that makes a slender suspension deck gallop apart, as the Tacoma Narrows Bridge did in 1940. A forecast chip lists what is coming and a banner counts it down. A second bonus chapter, **Anchorages**, is about land pylons, buried deadman anchors and backstays.
+Finishing the Roads reveals a bonus chapter where the weather fights back: a hurricane that lifts light decks, an M8 earthquake whose ground wave reaches the far bank later than the near one, and a resonant wind that makes a slender suspension deck gallop apart, as the Tacoma Narrows Bridge did in 1940. A forecast chip lists what is coming and a banner counts it down. A second bonus chapter, **Anchorages**, is about land pylons, buried deadman anchors and backstays. A third, **Jungle**, opens after level 30: rope bridges of bamboo, liana and rope tied to giant trees and temple ruins, crossed by monkeys, porters, hand carts, an ox cart and a jeep while canoes paddle underneath, and a certain Victorian explorer turns up at the finale.
 
 ### Daily Challenge and Endless
 
@@ -181,6 +181,7 @@ More detail on the rules, the badges, the daily challenge and every level is in 
 | **Roads** | 1–50 in six chapters | from the start | from a 10 m creek crossed with two planks to a 150 m span carrying tankers and heavy haulers |
 | ↳ *Forces of Nature* (bonus) | 51–53 | after level 50 | a hurricane, an M8 earthquake and a galloping deck in pulsing wind |
 | ↳ *Anchorages* (bonus) | 54–58 | after level 40 | land pylons, buried deadman anchors and backstays |
+| ↳ *Jungle* (bonus) | 59–68 | after level 30 | walkways, bamboo, liana and rope; trees and ruins as anchors; canoe channels, a waterfall and a monsoon |
 | **Iron Road** | 101–120 in four lines | after level 10 | railway bridges for handcars up to 2000-tonne ore trains and 150 km/h expresses |
 | **Famous Bridges** | 201–212 | after level 15 | scaled-down real bridges, each with a history card |
 | **Daily Challenge** / **Endless** | generated | from the start | a proven-solvable crossing per day; endless ever-harder crossings |
@@ -192,7 +193,7 @@ Every campaign level ships with two saved solutions: a reference design and a ch
 Served over http(s), SPAN is an installable Progressive Web App:
 
 - **Install:** in Chrome or Edge (desktop or Android) open Settings and press **Install SPAN**, or use the browser's install icon. On iPhone / iPad, tap **Share**, then **Add to Home Screen**. The app opens full-screen in any orientation.
-- **Offline:** the first visit precaches every game file (about 3.3 MB; `node tools/gen-precache.js` prints the current size). After that everything works with no connection. `node tools/test-offline-tour.js` proves it by touring every screen offline.
+- **Offline:** the first visit precaches every game file (about 4.1 MB; `node tools/gen-precache.js` prints the current size). After that everything works with no connection. `node tools/test-offline-tour.js` proves it by touring every screen offline.
 - **Updates:** when a new version is deployed, a **New version available — tap to reload** toast appears. Designs are saved, so reloading is safe.
 
 Opened from `file://` the game plays exactly the same, just without install and offline caching (browsers only run service workers on https and localhost).
@@ -221,7 +222,7 @@ The live site at https://umage-ai.github.io/SpanGame/ is deployed by [.github/wo
 You need Node 18 or later. The browser suites also need the dev dependency (`npm install` installs Playwright) and a local Chrome. Every browser check runs **headless**; nothing opens a window.
 
 ```sh
-npm test                  # Node-only suites: physics, all 90 levels, editor, templates, goals, events, generator, ...
+npm test                  # Node-only suites: physics, all 100 levels, editor, templates, goals, events, generator, ...
 npm run test:browser      # headless-Chrome suites: end-to-end runs, mobile layouts, PWA and offline
 npm run test:all          # both
 

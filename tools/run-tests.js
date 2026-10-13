@@ -10,6 +10,8 @@ const path = require('path');
 
 const NODE = [
   ['test-physics.js'],
+  ['test-jungle-core.js'], // jungle: walkway / bamboo / liana and the jungle traffic types, headless (docs/jungle/SPEC-JUNGLE.md)
+  ['test-jungle.js', '--node-only'], // jungle visuals: themes, sprite tables, cameo rule, level rules (js/features/jungle-fx.js)
   ['verify-levels.js'],
   ['test-editor.js'],
   ['test-unlock.js'],
@@ -34,6 +36,7 @@ const BROWSER = [
   ['e2e-events.js'],
   ['test-terrain-fix.js'],
   ['test-ceiling.js', '--browser-only'], // every level renders; traffic fits under the drawn ceilings
+  ['test-jungle.js', '--browser-only'], // jungle: every level draws, canoes, Livingstone, other themes unchanged
   ['test-daily.js'],
   ['test-famous.js'],
   ['test-history.js'],

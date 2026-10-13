@@ -1,0 +1,30 @@
+{
+  "id": 61,
+  "name": "Canopy Walk",
+  "theme": "jungle",
+  "hint": "Three giant trees hold up the canopy - tie onto them. Hang the walkway from the trees: Liana is cheap, and a full fan of it carries even the hand carts; Rope is the safe choice.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 30, "rightY": 0, "floorY": -18, "waterY": -12 },
+  "anchors": [
+    { "x": 0, "y": 0 },
+    { "x": 30, "y": 0 },
+    { "x": 0, "y": -4 },
+    { "x": 30, "y": -4 },
+    { "x": -0.5, "y": 10, "deco": "tree" },
+    { "x": 30.5, "y": 10, "deco": "tree" },
+    { "x": 15, "y": 14, "deco": "tree" }
+  ],
+  "pierZones": [],
+  "maxPiers": 0,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 30, "y0": -8, "y1": 16 },
+  "materials": [ "walkway", "bamboo", "liana", "rope" ],
+  "budget": 2300,
+  "traffic": [
+    { "type": "monkey", "count": 10, "interval": 0.5 },
+    { "type": "walker", "count": 4, "interval": 1.5 },
+    { "type": "handcart", "count": 2, "interval": 3 }
+  ],
+  "timeLimit": 105,
+  "templates": true,
+  "jungle": { "canoes": 1 }
+}

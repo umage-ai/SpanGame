@@ -386,5 +386,14 @@
     'features.about.ctaSub': 'umage.ai helps Danish and Nordic enterprises build and scale software with AI agents.',
     'features.about.ctaLink': 'Talk to umage.ai',
     'features.about.foot': 'SPAN {version} · open source, MIT license',
+
+    // ---- Jungle bonus chapter (js/features/jungle-fx.js)
+    'features.jungle.livingstone.greet': 'Dr Livingstone, I presume?',
+    'features.jungle.livingstone.reply': 'Indeed - and I see you have brought a bridge.',
+    'features.jungle.livingstone.lost': 'Dr Livingstone? ...Dr Livingstone?!',
+    'features.jungle.livingstone.cameo': 'Splendid bridge. Carry on!',
+    'features.jungle.livingstone.toast': 'You found Dr Livingstone! He has been waiting for a decent bridge since 1871.',
+    'features.jungle.label.canoes': 'Canoe channel',
+    'features.jungle.label.waterfall': 'Waterfall',
   });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -387,5 +387,14 @@
     'features.about.ctaSub': 'umage.ai hjælper danske og nordiske virksomheder med at bygge og skalere software med AI-agenter.',
     'features.about.ctaLink': 'Tal med umage.ai',
     'features.about.foot': 'SPAN {version} · open source, MIT-licens',
+
+    // ---- Jungle bonus chapter (js/features/jungle-fx.js)
+    'features.jungle.livingstone.greet': 'Dr. Livingstone, formoder jeg?',
+    'features.jungle.livingstone.reply': 'Ganske rigtigt - og jeg ser, De har taget en bro med.',
+    'features.jungle.livingstone.lost': 'Dr. Livingstone? ... Dr. Livingstone?!',
+    'features.jungle.livingstone.cameo': 'Fremragende bro. Bare fortsæt!',
+    'features.jungle.livingstone.toast': 'Du fandt Dr. Livingstone! Han har ventet på en ordentlig bro siden 1871.',
+    'features.jungle.label.canoes': 'Kanorende',
+    'features.jungle.label.waterfall': 'Vandfald',
   });
 })(typeof window !== 'undefined' ? window : globalThis);

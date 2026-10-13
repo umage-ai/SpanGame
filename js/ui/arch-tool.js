@@ -39,9 +39,9 @@
   const SNAP_DECK = 0.45;     // m: a curve joint at a deck station this close to the deck is pinned onto it
   const POS_EPS = 0.02;
   const SHAPE_NAMES = { parabolic: 'editor.arch.shape.parabolic', circular: 'editor.arch.shape.circular', catenary: 'editor.arch.shape.catenary' }; // dictionary keys
-  const POST_ORDER = ['steel', 'wood', 'girder', 'masonry', 'reinforced_road'];
-  const HANGER_ORDER = ['cable', 'rope', 'steel', 'wood', 'girder'];
-  const ARCH_ORDER = ['masonry', 'steel', 'wood', 'girder', 'cable', 'rope'];
+  const POST_ORDER = ['steel', 'wood', 'bamboo', 'girder', 'masonry', 'reinforced_road'];
+  const HANGER_ORDER = ['cable', 'rope', 'liana', 'steel', 'wood', 'girder'];
+  const ARCH_ORDER = ['masonry', 'steel', 'wood', 'bamboo', 'girder', 'cable', 'rope'];
 
   // Connect to deck is on by default: an arch under (or a cable over) a road is meant to carry it, and a bare
   // pin-jointed arch next to an unconnected deck fails - the most common newcomer surprise.

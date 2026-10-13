@@ -105,10 +105,17 @@
     truck: '<path d="M2.5 14V3.5h28V14z"/><path d="M31.5 14V6.5h7.2c.6 0 1.2.3 1.5.8l3.6 4.4c.3.4.5.9.5 1.4V14z"/><path d="M34 8h4.4l2.6 3.4H34z" fill="rgba(255,255,255,.55)"/>',
     semi: '<path d="M1 13.5V3.2h31v10.3z"/><path d="M33 14V5.5h6.3c.6 0 1.1.3 1.4.7l3.8 5c.3.4.5.9.5 1.4V14z"/><path d="M35.3 7h3.6l2.8 3.6h-6.4z" fill="rgba(255,255,255,.55)"/>',
     tanker: '<rect x="1" y="3.5" width="31" height="9" rx="4.5"/><path d="M33 14V5.5h6.3c.6 0 1.1.3 1.4.7l3.8 5c.3.4.5.9.5 1.4V14z"/><path d="M35.3 7h3.6l2.8 3.6h-6.4z" fill="rgba(255,255,255,.55)"/>',
+    walker: '<circle cx="24" cy="3.6" r="2.2"/><path d="M22 6.5h4l1.2 5-1.6 1-.9-3.5V14h-1.4v-4.2L22 13.5l-1.6-1z"/><path d="M20 8.5l-6 2.5h-4l-.5 1.3h4.5l6.4-2.6zM13.5 9h12l-.4 1.8h-11z" opacity=".85"/><path d="M22.5 14l-1.4 4h1.6l1.5-3.4 1.4 3.4h1.6l-1.4-4z"/>',
+    monkey: '<circle cx="30" cy="6" r="3"/><path d="M18 11c0-3 3-5 7-5h2v3.5c-1.5 0-2.7 1-3.2 2.5L22 17h-2l1-4.5C19 12.6 18 12 18 11z"/><path d="M18 10.5C13 10 10 6 6 6.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M26 13l2 4h-1.8l-1.7-3z"/>',
+    handcart: '<path d="M10 5h22v6H10z"/><path d="M32 6.5l9-2.5M32 8.5l9 .5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>',
+    oxcart: '<path d="M4 6h19v6H4z"/><path d="M23 9h4.5c1 0 1.7.5 2.3 1.4l.5.8h6.5c1 0 1.7.8 1.7 1.7V14H23z"/><path d="M38 7.5l3-3.5M41 4l1.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>',
+    jeep: '<path d="M4 14v-4.2c0-.8.5-1.4 1.3-1.6L10 7h4V4h2.5l3 3H27l3-3h5.5l1.5 3.5 4 1c1 .2 1.5 1 1.5 2V14z"/><path d="M15 7.5h11l1.6-2h-9z" fill="rgba(255,255,255,.5)"/>',
+    livingstone: '<circle cx="24" cy="4.3" r="2.2"/><path d="M20.5 3.3c0-1.7 1.6-2.7 3.5-2.7s3.5 1 3.5 2.7z"/><path d="M22 7h4l1.2 6-1.6 1-.9-3.5V14h-1.4v-3.5L22 14l-1.6-1z"/><path d="M22.5 14l-1.4 4h1.6l1.5-3.4 1.4 3.4h1.6l-1.4-4z"/><path d="M29 8v10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
     heavy: '<path d="M2 14V9h34v5z"/><path d="M36 14V5h5.4c.6 0 1.1.3 1.4.8l2.2 3.6V14z"/><path d="M6 9l20-7 1.4 1.2L10 9z"/><rect x="6" y="5.5" width="6" height="3.5" rx=".6"/>',
   };
   const WHEELS = {
     car: [11, 35], van: [11, 35], bus: [9, 37], truck: [8, 15, 38], semi: [6, 12, 28, 39], tanker: [6, 12, 28, 39], heavy: [6, 13, 20, 27, 40],
+    walker: [], monkey: [], livingstone: [], handcart: [16, 26], oxcart: [10, 22, 36], jeep: [11, 35],
   };
   function vehSvg(type) {
     const body = VEH[type] || VEH.car;
@@ -176,6 +183,8 @@
     return (C.bogies || []).reduce((a, b) => a + (+b.mass || 0), 0);
   }
   function trainMass(preset) { return ((preset && preset.cars) || []).reduce((a, c) => a + railCarMass(c), 0); }
+  // traffic types flagged `hidden` (Dr Livingstone) stay out of the chips and tooltips, to keep the surprise
+  function isHiddenGroup(g) { const V = g && !g.train && BG.Vehicles && BG.Vehicles[g.type]; return !!(V && V.hidden); }
   function isTrainGroup(g) { return !!g && (g.type === 'train' || !!g.train); }
   function fmtMass(kg) { const tn = kg / 1000; return (tn >= 100 ? num(Math.round(tn)) : num(Math.round(tn * 10) / 10)) + '\u00a0t'; }
   // one traffic chip: road vehicle (icon ×count) or train (icon, "2 × Local Steam · 4 cars")
@@ -199,7 +208,7 @@
     return trainSvg(trainKind(trainPreset(best.train)));
   }
   function trafficSummary(groups) {
-    return groups.map(g => {
+    return groups.filter(g => !isHiddenGroup(g)).map(g => {
       const n = g.count || 1;
       if (isTrainGroup(g)) return t('hud.traffic.trainCount', { n, name: trainName(trainPreset(g.train)) });
       return t('hud.traffic.vehicleCount', { n, name: vehicleName(g.type) });
@@ -262,13 +271,15 @@
     snow: { sky: ['#bcd7f2', '#eef6ff'], ground: '#e8f0f8', deep: '#9fb4c9', accent: '#9ad0ff', water: '#4c7fa8' },
     night: { sky: ['#141a3d', '#36407a'], ground: '#2a3550', deep: '#161d30', accent: '#8f9bff', water: '#22406a' },
     city: { sky: ['#9fb3d8', '#e2e9f5'], ground: '#5c6577', deep: '#363c49', accent: '#7aa2ff', water: '#3c6e9e' },
+    jungle: { sky: ['#6fae84', '#e3f0cf'], ground: '#3f8a3a', deep: '#24583a', accent: '#9bd36a', water: '#6f8f45' },
+    jungle_temple: { sky: ['#a8b07a', '#f3e6bf'], ground: '#4f8a3a', deep: '#2e5a36', accent: '#e0b45a', water: '#6f8f45' },
     tropical: { sky: ['#5ed6e0', '#d4fbff'], ground: '#4fb06a', deep: '#2b7a4b', accent: '#4fd1c5', water: '#1fb5c9' },
     volcanic: { sky: ['#5a1d24', '#d1553a'], ground: '#3a2a2a', deep: '#1c1414', accent: '#ff5d73', water: '#c4442a' },
   };
   function theme(name) { return THEMES[name] || THEMES.meadow; }
 
   // the palette's short material names (hud.palette.short.<id>); the others show their full name
-  const SHORT_MAT = { reinforced_road: 1, cable: 1, rail: 1, girder: 1 };
+  const SHORT_MAT = { reinforced_road: 1, cable: 1, rail: 1, girder: 1, walkway: 1 };
   function shortMatName(id) { return SHORT_MAT[id] ? t('hud.palette.short.' + id) : matName(id); }
   // a chapter's name / desc are getters that read hud.chapter.<key>.name / .desc in the current language
   function chapterText(ch) { return lazyText(ch, { name: 'hud.chapter.' + ch.key + '.name', desc: 'hud.chapter.' + ch.key + '.desc' }); }
@@ -295,6 +306,7 @@
       // finales of the branching bonus chapters (BG.Storage.CAMPAIGNS.road.bonus), keyed by chapter id
       bonusFinales: {
         anchorages: finaleText('anchorages'),
+        jungle: finaleText('jungle'),
       },
     }, { name: 'hud.camp.road.name', sub: 'hud.camp.road.sub', allLabel: 'hud.camp.road.all', levelK: 'hud.level.badge' }),
     rail: lazyText({
@@ -393,6 +405,8 @@
     // hidden bonus chapter that branches off after level 40 (rules: BG.Storage.CAMPAIGNS.road.bonus); Forces of Nature
     // (n 7, 51-53) is added by js/features/forces-fx.js
     { n: 8, key: 'anchorages', from: 54, to: 58, theme: 'autumn', hidden: true },
+    // Jungle (59-68, opens after level 30)
+    { n: 9, key: 'jungle', from: 59, to: 68, theme: 'jungle', hidden: true },
   ].map(chapterText);
 
   function levelsList() { return Array.isArray(BG.Levels) ? BG.Levels : []; }
@@ -461,14 +475,36 @@
     const sx = x => ((x - x0) / (x1 - x0)) * W;
     const sy = y => ((top - y) / (top - bot)) * H;
     const fy = sy(t.floorY != null ? t.floorY : bot);
+    const id = levelId(level), themeKey = THEMES[level && level.theme] ? level.theme : 'meadow';
     let s = '<svg class="thumb" viewBox="0 0 100 56" preserveAspectRatio="none" aria-hidden="true">';
-    s += '<defs><linearGradient id="tg' + levelId(level) + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.sky[0] + '"/><stop offset="1" stop-color="' + th.sky[1] + '"/></linearGradient></defs>';
-    s += '<rect width="100" height="56" fill="url(#tg' + levelId(level) + ')"/>';
-    s += '<path d="M0 ' + (H * 0.62) + ' Q25 ' + (H * 0.42) + ' 50 ' + (H * 0.58) + ' T100 ' + (H * 0.5) + ' V56 H0Z" fill="' + th.deep + '" opacity=".25"/>';
-    if (t.waterY != null) s += '<rect x="0" y="' + sy(t.waterY) + '" width="100" height="' + (H - sy(t.waterY)) + '" fill="' + th.water + '" opacity=".9"/>';
-    // valley floor + banks
-    s += '<path d="M0 ' + sy(t.leftY || 0) + ' H' + sx(t.leftEdge) + ' L' + (sx(t.leftEdge) + 3) + ' ' + fy + ' H' + (sx(t.rightEdge) - 3) + ' L' + sx(t.rightEdge) + ' ' + sy(t.rightY || 0) + ' H100 V56 H0Z" fill="' + th.ground + '"/>';
-    if (t.waterY != null) s += '<rect x="' + (sx(t.leftEdge) + 1) + '" y="' + sy(t.waterY) + '" width="' + (sx(t.rightEdge) - sx(t.leftEdge) - 2) + '" height="' + Math.max(0, fy - sy(t.waterY)) + '" fill="' + th.water + '" opacity=".85"/>';
+    s += '<defs><linearGradient id="tg' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.sky[0] + '"/><stop offset="1" stop-color="' + th.sky[1] + '"/></linearGradient>' +
+      '<linearGradient id="tgg' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.ground + '"/><stop offset="1" stop-color="' + th.deep + '"/></linearGradient>' +
+      '<linearGradient id="tgw' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.water + '" stop-opacity=".8"/><stop offset="1" stop-color="' + th.deep + '" stop-opacity=".95"/></linearGradient></defs>';
+    // the theme's painted backdrop (the same image the level is played on), over the sky gradient while it loads
+    s += '<rect width="100" height="56" fill="url(#tg' + id + ')"/>';
+    s += '<image href="' + (BG.assetBase || '') + 'assets/bg/' + themeKey + '.jpg" x="0" y="0" width="100" height="56" preserveAspectRatio="xMidYMid slice"/>';
+    // valley floor + banks: shaded earth with a grass lip, water with a bright surface line
+    const yl = sy(t.leftY || 0), yr = sy(t.rightY || 0), xl = sx(t.leftEdge), xr = sx(t.rightEdge);
+    s += '<path d="M0 ' + yl + ' H' + xl + ' L' + (xl + 3) + ' ' + fy + ' H' + (xr - 3) + ' L' + xr + ' ' + yr + ' H100 V56 H0Z" fill="url(#tgg' + id + ')"/>';
+    s += '<path d="M0 ' + yl + ' H' + xl + 'M' + xr + ' ' + yr + ' H100" stroke="' + th.accent + '" stroke-width="1.4" opacity=".9"/>';
+    if (t.waterY != null) {
+      const wy = sy(t.waterY);
+      s += '<rect x="' + (xl + 1) + '" y="' + wy + '" width="' + (xr - xl - 2) + '" height="' + Math.max(0, fy - wy) + '" fill="url(#tgw' + id + ')"/>';
+      s += '<path d="M' + (xl + 1.5) + ' ' + wy + ' H' + (xr - 1.5) + '" stroke="#fff" stroke-width=".6" opacity=".7"/>';
+    }
+    // jungle anchors drawn as what they are in the level: giant trees and temple pillars
+    (level && level.anchors || []).forEach(a => {
+      if (!a || !a.deco) return;
+      const ax = sx(a.x), base = a.x <= t.leftEdge ? yl : a.x >= t.rightEdge ? yr : fy;
+      if (a.deco === 'tree') {
+        const cy = Math.max(sy(a.y) - 4, 7); // the canopy stays in view even when the anchor sits above the tile
+        s += '<path d="M' + ax + ' ' + base + ' V' + cy + '" stroke="#5a3a22" stroke-width="2.2"/>';
+        s += '<circle cx="' + ax + '" cy="' + cy + '" r="7" fill="#2f7a35"/><circle cx="' + (ax - 3) + '" cy="' + (cy - 2) + '" r="4.5" fill="#4a9c45"/>';
+      } else if (a.deco === 'ruin') {
+        s += '<path d="M' + (ax - 1.6) + ' ' + base + 'V' + sy(a.y) + 'h3.2V' + base + 'Z" fill="#a39a80" stroke="#5f5a48" stroke-width=".4"/>';
+        s += '<path d="M' + (ax - 2.2) + ' ' + (sy(a.y) - 0.8) + 'h4.4v1h-4.4Z" fill="#8a826a"/>';
+      }
+    });
     (level && level.pierZones || []).forEach(z => {
       s += '<rect x="' + sx(z.x0) + '" y="' + (fy - 1.2) + '" width="' + Math.max(1, sx(z.x1) - sx(z.x0)) + '" height="1.2" fill="#fff" opacity=".6"/>';
     });
@@ -1034,7 +1070,7 @@
       this.el.budgetV.textContent = money(level.budget);
       this._sig.budget = null;
       // traffic (road vehicles and trains)
-      const groups = Array.isArray(level.traffic) ? level.traffic : [];
+      const groups = (Array.isArray(level.traffic) ? level.traffic : []).filter(g => !isHiddenGroup(g));
       const total = groups.reduce((a, g) => a + (g.count || 1), 0);
       const allTrains = groups.length && groups.every(isTrainGroup);
       this.el.traffic.innerHTML = groups.map(trafficChip).join('') || '<span class="tr-none">' + esc(t('hud.traffic.none')) + '</span>';
@@ -1595,6 +1631,9 @@
         '<rect x="2" y="7" width="11" height="5" rx=".8"/><rect x="14" y="7" width="12" height="5" rx=".8"/><rect x="27" y="7" width="11" height="5" rx=".8"/>' +
         '<rect x="2" y="12.5" width="6" height="5" rx=".8"/><rect x="9" y="12.5" width="12" height="5" rx=".8"/><rect x="22" y="12.5" width="10" height="5" rx=".8"/><rect x="33" y="12.5" width="5" height="5" rx=".8"/></g></svg>';
       case 'girder': return '<svg viewBox="0 0 40 24"><rect x="2" y="6" width="36" height="12" rx="1.5" fill="' + c + '"/><rect x="2" y="6" width="36" height="2.4" fill="#9fb3c8"/><rect x="2" y="15.6" width="36" height="2.4" fill="#33475c"/><path d="M8 8.4v7.2M16 8.4v7.2M24 8.4v7.2M32 8.4v7.2" stroke="rgba(255,255,255,.22)" stroke-width="1"/><g fill="#c9d4e0">' + [5, 13, 21, 29, 35].map(x => '<circle cx="' + x + '" cy="7.2" r=".7"/><circle cx="' + x + '" cy="16.8" r=".7"/>').join('') + '</g></svg>';
+      case 'walkway': return '<svg viewBox="0 0 40 24"><rect x="2" y="10" width="36" height="5" rx="1" fill="' + c + '"/><g stroke="rgba(70,45,15,.6)" stroke-width="1">' + [6, 10, 14, 18, 22, 26, 30, 34].map(x => '<path d="M' + x + ' 10v5"/>').join('') + '</g><path d="M2 15Q20 21 38 15" stroke="#8a6a3a" stroke-width="1.2" fill="none"/></svg>';
+      case 'bamboo': return '<svg viewBox="0 0 40 24"><rect x="2" y="9" width="36" height="6" rx="3" fill="' + c + '"/><rect x="2" y="9" width="36" height="1.8" rx=".9" fill="rgba(255,255,255,.28)"/><g fill="#5f7a2c">' + [11, 21, 31].map(x => '<rect x="' + x + '" y="8.4" width="2" height="7.2" rx=".8"/>').join('') + '</g></svg>';
+      case 'liana': return '<svg viewBox="0 0 40 24"><path d="M2 7C10 20 14 4 20 13S32 20 38 8" stroke="' + c + '" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M2 7C10 20 14 4 20 13S32 20 38 8" stroke="rgba(20,60,20,.5)" stroke-width="2.2" stroke-dasharray="1.5 2.5" fill="none"/><path d="M14 8l3-3 1 3zM26 15l3 3 1-3z" fill="#6fbf4a"/></svg>';
       default: return '<svg viewBox="0 0 40 24"><rect x="2" y="9" width="36" height="6" rx="2" fill="' + c + '"/></svg>';
     }
   }

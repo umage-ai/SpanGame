@@ -1,0 +1,18 @@
+{
+  "id": 64,
+  "name": "Temple Causeway",
+  "theme": "jungle_temple",
+  "hint": "The old temple pillars still stand in the river, solid stone after a thousand years. Tie your bridge to them and let them carry the ox carts.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 42, "rightY": 0, "floorY": -16, "waterY": -9 },
+  "anchors": [ { "x": 0, "y": 0 }, { "x": 42, "y": 0 }, { "x": 0, "y": -4 }, { "x": 42, "y": -4 }, { "x": 14, "y": -1, "deco": "ruin" }, { "x": 28, "y": -1, "deco": "ruin" } ],
+  "pierZones": [],
+  "maxPiers": 0,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 42, "y0": -9, "y1": 12 },
+  "materials": [ "walkway", "bamboo", "liana", "rope", "wood" ],
+  "budget": 4150,
+  "traffic": [ { "type": "walker", "count": 4, "interval": 1.5 }, { "type": "oxcart", "count": 2, "interval": 5 } ],
+  "timeLimit": 100,
+  "templates": true,
+  "jungle": { "canoes": 1 }
+}

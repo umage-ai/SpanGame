@@ -1,0 +1,22 @@
+{
+  "id": 60,
+  "name": "Porter's Path",
+  "theme": "jungle",
+  "hint": "The porters bring hand carts today, and a bare sagging walkway folds under a cart. Stiffen it with a light Bamboo truss from the lower bolts. Bamboo is cheap and strong in tension, but it buckles suddenly when squeezed - keep the struts short.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 20, "rightY": 0, "floorY": -12, "waterY": null },
+  "anchors": [
+    { "x": 0, "y": 0 },
+    { "x": 20, "y": 0 },
+    { "x": 0, "y": -4 },
+    { "x": 20, "y": -4 }
+  ],
+  "pierZones": [],
+  "maxPiers": 0,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 20, "y0": -10, "y1": 8 },
+  "materials": [ "walkway", "bamboo" ],
+  "budget": 1600,
+  "traffic": [ { "type": "walker", "count": 6, "interval": 1.5 }, { "type": "handcart", "count": 2, "interval": 3 } ],
+  "timeLimit": 80,
+  "templates": false
+}

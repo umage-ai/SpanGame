@@ -10,3 +10,5 @@ night: deep blue night sky, big glowing moon, many stars, dark hills with a few 
 city: distant city skyline at dusk, purple and orange sunset sky, silhouetted skyscrapers with lit windows
 tropical: distant lush green jungle hills and palm silhouettes, turquoise teal sky
 volcanic: dark red smoky sky, distant volcano with glowing lava and ash plume, black jagged rocks
+jungle: dense tropical rainforest gorge, layered misty jungle canopy silhouettes, giant buttress trees and hanging vines in the distance, a distant waterfall on a green cliff, soft green and gold light, humid haze
+jungle_temple: ancient overgrown stone temple ruins and a stepped pyramid half swallowed by jungle in the distance, carved stone towers covered in vines and moss, misty rainforest canopy, warm golden green light
