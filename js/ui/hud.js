@@ -475,14 +475,36 @@
     const sx = x => ((x - x0) / (x1 - x0)) * W;
     const sy = y => ((top - y) / (top - bot)) * H;
     const fy = sy(t.floorY != null ? t.floorY : bot);
+    const id = levelId(level), themeKey = THEMES[level && level.theme] ? level.theme : 'meadow';
     let s = '<svg class="thumb" viewBox="0 0 100 56" preserveAspectRatio="none" aria-hidden="true">';
-    s += '<defs><linearGradient id="tg' + levelId(level) + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.sky[0] + '"/><stop offset="1" stop-color="' + th.sky[1] + '"/></linearGradient></defs>';
-    s += '<rect width="100" height="56" fill="url(#tg' + levelId(level) + ')"/>';
-    s += '<path d="M0 ' + (H * 0.62) + ' Q25 ' + (H * 0.42) + ' 50 ' + (H * 0.58) + ' T100 ' + (H * 0.5) + ' V56 H0Z" fill="' + th.deep + '" opacity=".25"/>';
-    if (t.waterY != null) s += '<rect x="0" y="' + sy(t.waterY) + '" width="100" height="' + (H - sy(t.waterY)) + '" fill="' + th.water + '" opacity=".9"/>';
-    // valley floor + banks
-    s += '<path d="M0 ' + sy(t.leftY || 0) + ' H' + sx(t.leftEdge) + ' L' + (sx(t.leftEdge) + 3) + ' ' + fy + ' H' + (sx(t.rightEdge) - 3) + ' L' + sx(t.rightEdge) + ' ' + sy(t.rightY || 0) + ' H100 V56 H0Z" fill="' + th.ground + '"/>';
-    if (t.waterY != null) s += '<rect x="' + (sx(t.leftEdge) + 1) + '" y="' + sy(t.waterY) + '" width="' + (sx(t.rightEdge) - sx(t.leftEdge) - 2) + '" height="' + Math.max(0, fy - sy(t.waterY)) + '" fill="' + th.water + '" opacity=".85"/>';
+    s += '<defs><linearGradient id="tg' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.sky[0] + '"/><stop offset="1" stop-color="' + th.sky[1] + '"/></linearGradient>' +
+      '<linearGradient id="tgg' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.ground + '"/><stop offset="1" stop-color="' + th.deep + '"/></linearGradient>' +
+      '<linearGradient id="tgw' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + th.water + '" stop-opacity=".8"/><stop offset="1" stop-color="' + th.deep + '" stop-opacity=".95"/></linearGradient></defs>';
+    // the theme's painted backdrop (the same image the level is played on), over the sky gradient while it loads
+    s += '<rect width="100" height="56" fill="url(#tg' + id + ')"/>';
+    s += '<image href="' + (BG.assetBase || '') + 'assets/bg/' + themeKey + '.jpg" x="0" y="0" width="100" height="56" preserveAspectRatio="xMidYMid slice"/>';
+    // valley floor + banks: shaded earth with a grass lip, water with a bright surface line
+    const yl = sy(t.leftY || 0), yr = sy(t.rightY || 0), xl = sx(t.leftEdge), xr = sx(t.rightEdge);
+    s += '<path d="M0 ' + yl + ' H' + xl + ' L' + (xl + 3) + ' ' + fy + ' H' + (xr - 3) + ' L' + xr + ' ' + yr + ' H100 V56 H0Z" fill="url(#tgg' + id + ')"/>';
+    s += '<path d="M0 ' + yl + ' H' + xl + 'M' + xr + ' ' + yr + ' H100" stroke="' + th.accent + '" stroke-width="1.4" opacity=".9"/>';
+    if (t.waterY != null) {
+      const wy = sy(t.waterY);
+      s += '<rect x="' + (xl + 1) + '" y="' + wy + '" width="' + (xr - xl - 2) + '" height="' + Math.max(0, fy - wy) + '" fill="url(#tgw' + id + ')"/>';
+      s += '<path d="M' + (xl + 1.5) + ' ' + wy + ' H' + (xr - 1.5) + '" stroke="#fff" stroke-width=".6" opacity=".7"/>';
+    }
+    // jungle anchors drawn as what they are in the level: giant trees and temple pillars
+    (level && level.anchors || []).forEach(a => {
+      if (!a || !a.deco) return;
+      const ax = sx(a.x), base = a.x <= t.leftEdge ? yl : a.x >= t.rightEdge ? yr : fy;
+      if (a.deco === 'tree') {
+        const cy = Math.max(sy(a.y) - 4, 7); // the canopy stays in view even when the anchor sits above the tile
+        s += '<path d="M' + ax + ' ' + base + ' V' + cy + '" stroke="#5a3a22" stroke-width="2.2"/>';
+        s += '<circle cx="' + ax + '" cy="' + cy + '" r="7" fill="#2f7a35"/><circle cx="' + (ax - 3) + '" cy="' + (cy - 2) + '" r="4.5" fill="#4a9c45"/>';
+      } else if (a.deco === 'ruin') {
+        s += '<path d="M' + (ax - 1.6) + ' ' + base + 'V' + sy(a.y) + 'h3.2V' + base + 'Z" fill="#a39a80" stroke="#5f5a48" stroke-width=".4"/>';
+        s += '<path d="M' + (ax - 2.2) + ' ' + (sy(a.y) - 0.8) + 'h4.4v1h-4.4Z" fill="#8a826a"/>';
+      }
+    });
     (level && level.pierZones || []).forEach(z => {
       s += '<rect x="' + sx(z.x0) + '" y="' + (fy - 1.2) + '" width="' + Math.max(1, sx(z.x1) - sx(z.x0)) + '" height="1.2" fill="#fff" opacity=".6"/>';
     });
