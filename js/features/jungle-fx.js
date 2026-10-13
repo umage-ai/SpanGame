@@ -220,7 +220,9 @@
     else if (r < 0.64) pBamboo(g, 5 + r2 * 5, r, r2);
     else if (r < 0.9) pFern(this, g, 1.6 + r2 * 1.6);
     if (temple && r2 > 0.72) {
-      if (r < 0.5) {
+      // keep the big stone head off the far bank's first 13 m: Stanley and Livingstone meet there
+      const T = this.terrain, meetSpot = T && x > T.re - 1 && x < T.re + 13;
+      if (r < 0.5 && !meetSpot) {
         const w = 2.2 + r2 * 1.2;
         const m = Sprites.meta['jungle/ruin_head'], h = w * m.h / m.w;
         const img = Sprites.raster('jungle/ruin_head', w * this.camera.zoom * this.dpr);
