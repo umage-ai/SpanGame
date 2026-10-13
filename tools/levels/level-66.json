@@ -1,0 +1,26 @@
+{
+  "id": 66,
+  "name": "Monsoon",
+  "theme": "jungle",
+  "hint": "The monsoon breaks a few seconds after the first monkey sets off. Gusts lift a light walkway, and Liana goes slack when the deck rises. Brace the deck from below as well as from above so it cannot flap.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 34, "rightY": 0, "floorY": -14, "waterY": -8 },
+  "anchors": [
+    { "x": 0, "y": 0 },
+    { "x": 34, "y": 0 },
+    { "x": 0, "y": -4 },
+    { "x": 34, "y": -4 },
+    { "x": 0, "y": 9, "deco": "tree" },
+    { "x": 34, "y": 9, "deco": "tree" }
+  ],
+  "pierZones": [],
+  "maxPiers": 0,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 34, "y0": -8, "y1": 14 },
+  "materials": [ "walkway", "bamboo", "liana", "rope", "wood" ],
+  "budget": 2500,
+  "traffic": [ { "type": "monkey", "count": 6, "interval": 0.6 }, { "type": "walker", "count": 4, "interval": 1.5 }, { "type": "handcart", "count": 2, "interval": 3 } ],
+  "timeLimit": 95,
+  "templates": true,
+  "events": [ { "type": "wind", "start": 6, "duration": 24, "speed": 24, "gust": 0.5, "lift": 2, "dir": 1, "rain": true } ],
+  "jungle": { "canoes": 0 }
+}

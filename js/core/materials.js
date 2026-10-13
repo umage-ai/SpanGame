@@ -10,7 +10,15 @@
  * Railway (SPEC §9.2): rail is a ballasted track deck (isRail; trains ride only on it, road
  * vehicles never do) - heavier and stiffer in bending than road. Masonry is cheap, very heavy,
  * enormously strong in compression and nearly useless in tension. Girder is a heavy steel box
- * member for the ore trains. */
+ * member for the ore trains.
+ * Jungle (docs/jungle/SPEC-JUNGLE.md §2; reachable only from levels that list them): jungle traffic is
+ * ~100x lighter than road traffic, so these are cheap, light and weak. walkway = the light deck (isRoad;
+ * bends at its joints like road with a 12x lower momentLimit, maxLength 4 m). bamboo = frame member, weak
+ * in compression and flexible (1.4 % strain at the tension limit): an overloaded bamboo strut buckles at
+ * once. liana = the cheapest, longest tension-only member, ~1/7 the strength of rope. Final values:
+ *   walkway  $30/m  18 kg/m  EA 6.0e6  T 40e3  C 30e3  EI 1.5e4 / M 2.5e3 / ref 4  max 4 m
+ *   bamboo   $15/m   5 kg/m  EA 2.5e6  T 35e3  C 20e3                              max 5 m
+ *   liana     $5/m   1 kg/m  EA 1.0e6  T  8e3  C  8e3  (tension only)              max 24 m */
 (function (root) {
   'use strict';
   const BG = (root.BG = root.BG || {});
@@ -73,6 +81,26 @@
       stiffness: 7.0e8, tensionLimit: 4.0e6, compressionLimit: 3.4e6,
       maxLength: 12, isRoad: false, tensionOnly: false, width: 0.5,
     },
+    // ---- jungle (SPEC-JUNGLE §2)
+    walkway: {
+      id: 'walkway', name: 'Bamboo Walkway', color: '#c9a35a',
+      costPerMeter: 30, massPerMeter: 18,
+      stiffness: 6.0e6, tensionLimit: 40e3, compressionLimit: 30e3,
+      bendStiffness: 1.5e4, momentLimit: 2.5e3, bendRefLength: 4,
+      maxLength: 4, isRoad: true, tensionOnly: false, width: 0.3,
+    },
+    bamboo: {
+      id: 'bamboo', name: 'Bamboo', color: '#a3b84a',
+      costPerMeter: 15, massPerMeter: 5,
+      stiffness: 2.5e6, tensionLimit: 35e3, compressionLimit: 20e3,
+      maxLength: 5, isRoad: false, tensionOnly: false, width: 0.18,
+    },
+    liana: {
+      id: 'liana', name: 'Liana', color: '#4e7a2c',
+      costPerMeter: 5, massPerMeter: 1,
+      stiffness: 1.0e6, tensionLimit: 8e3, compressionLimit: 8e3,
+      maxLength: 24, isRoad: false, tensionOnly: true, width: 0.07,
+    },
   };
 
   // i18n (docs/I18N.md): `name` reads vehicles.material.<id> in the current language
@@ -80,7 +108,7 @@
 
   BG.Materials = M;
   /** Palette order (keys 1–6 on road levels; rail levels list their own materials). */
-  BG.MaterialOrder = ['road', 'reinforced_road', 'wood', 'steel', 'rope', 'cable', 'rail', 'masonry', 'girder'];
+  BG.MaterialOrder = ['road', 'reinforced_road', 'wood', 'steel', 'rope', 'cable', 'rail', 'masonry', 'girder', 'walkway', 'bamboo', 'liana'];
   /** Cost constants. Pier cost = pierBase + pierPerMeter * (topY - floorY). */
   BG.Costs = { joint: 0, pierBase: 1000, pierPerMeter: 250 };
   /** Land pylons (SPEC §17: piers in a land pier zone, zone.ground): a rigid concrete column on a footing.

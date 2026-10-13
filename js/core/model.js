@@ -625,6 +625,7 @@
         continue;
       }
       const def = BG.Vehicles && BG.Vehicles[g.type];
+      if (def && def.hidden) continue; // jungle: Dr Livingstone stays a surprise (the sim still counts him)
       total += c;
       const name = def ? def.name.toLowerCase() : g.type;
       items.push({ type: g.type, kind: 'road', count: c, name });

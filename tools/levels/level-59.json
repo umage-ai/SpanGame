@@ -1,0 +1,25 @@
+{
+  "id": 59,
+  "name": "Monkey Bridge",
+  "theme": "jungle",
+  "hint": "Welcome to the jungle: no cars here, only monkeys and porters. A Bamboo Walkway can simply hang between the banks like a rope bridge - it sags, but it holds. Sling Liana down from the trees to stop it swinging; Liana is cheap and long, but it only pulls.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 14, "rightY": 0, "floorY": -14, "waterY": -9 },
+  "anchors": [
+    { "x": 0, "y": 0 },
+    { "x": 14, "y": 0 },
+    { "x": 0, "y": -3 },
+    { "x": 14, "y": -3 },
+    { "x": 0, "y": 7, "deco": "tree" },
+    { "x": 14, "y": 7, "deco": "tree" }
+  ],
+  "pierZones": [],
+  "maxPiers": 0,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 14, "y0": -6, "y1": 12 },
+  "materials": [ "walkway", "liana" ],
+  "budget": 650,
+  "traffic": [ { "type": "monkey", "count": 6, "interval": 0.7 }, { "type": "walker", "count": 2, "interval": 2 } ],
+  "timeLimit": 60,
+  "templates": false,
+  "jungle": { "canoes": 1 }
+}

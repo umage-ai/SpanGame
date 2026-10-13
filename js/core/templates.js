@@ -18,6 +18,9 @@
     rail: { id: 'rail', maxLength: 6, costPerMeter: 220, isRail: true },
     masonry: { id: 'masonry', maxLength: 5, costPerMeter: 40 },
     girder: { id: 'girder', maxLength: 12, costPerMeter: 300 },
+    walkway: { id: 'walkway', maxLength: 4, costPerMeter: 30, isRoad: true },
+    bamboo: { id: 'bamboo', maxLength: 5, costPerMeter: 15 },
+    liana: { id: 'liana', maxLength: 24, costPerMeter: 5, tensionOnly: true },
   };
   const FALLBACK_VEH_MASS = { car: 1200, van: 2500, bus: 12000, truck: 20000, semi: 38000, tanker: 45000, heavy: 60000 };
   const EPS = 1e-6;
@@ -63,11 +66,11 @@
     const railDeck = first(allowed.filter(isRailMat).concat(['rail']));
     let road;
     if (opts.road && has(opts.road)) road = opts.road;
-    else if (railDeck && (isRailLevel(level) || !first(['road', 'reinforced_road']))) road = railDeck;
+    else if (railDeck && (isRailLevel(level) || !first(['road', 'reinforced_road', 'walkway']))) road = railDeck;
     else if (heaviest >= 9000 && has('reinforced_road')) road = 'reinforced_road';
-    else road = first(['road', 'reinforced_road']);
-    const struct = (opts.struct && has(opts.struct)) ? opts.struct : first(['steel', 'girder', 'wood', 'reinforced_road', 'road', 'cable', 'rope', 'masonry'].concat(railDeck ? [railDeck] : []));
-    const tension = (opts.tension && has(opts.tension)) ? opts.tension : first(['cable', 'rope', 'steel', 'girder', 'wood']);
+    else road = first(['road', 'reinforced_road', 'walkway']);
+    const struct = (opts.struct && has(opts.struct)) ? opts.struct : first(['steel', 'girder', 'wood', 'bamboo', 'reinforced_road', 'road', 'cable', 'rope', 'masonry'].concat(railDeck ? [railDeck] : []));
+    const tension = (opts.tension && has(opts.tension)) ? opts.tension : first(['cable', 'rope', 'liana', 'steel', 'girder', 'wood']);
     const masonry = first(['masonry']);
     return { road: road || struct, struct: struct || road, tension: tension || struct || road, masonry };
   }

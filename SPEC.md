@@ -1128,3 +1128,15 @@ unchanged (`verify-levels` output is identical).
   The camera fit (`levelBounds` wrapped) keeps 3.5 m of the mass in frame.
 - Tests: `tools/test-ceiling.js` (which levels, heights, outline, cosmetic-only runs, generated crossings; in the
   browser every level renders and the drawn roofs of the traffic stay under the drawn ceiling).
+
+## 20. Bonus chapter "Jungle" (levels 59–68)
+A hidden Roads chapter that opens when level 30 is complete (a branching bonus chapter, §15, registered in
+`CAMPAIGNS.road.bonus`; chapter 9 in the HUD). Full spec: [docs/jungle/SPEC-JUNGLE.md](docs/jungle/SPEC-JUNGLE.md).
+- **Materials:** `walkway` (light deck, `isRoad`), `bamboo` (light strut, early buckling), `liana` (cheap, weak tension).
+- **Traffic:** `walker`, `monkey`, `handcart`, `oxcart`, `jeep`, and the hidden `livingstone` (finale only).
+- **Themes:** `jungle`, `jungle_temple`. Tree and ruin anchors (`deco`), canoe channels and a waterfall
+  (`level.jungle`), a monsoon wind on 66.
+- **Rendering:** `js/features/jungle-fx.js` (`BG.JungleFx`) wraps the renderer and does nothing on other themes.
+  Canoes and Dr Livingstone's lines are timed by `sim.time`, so they replay the same way; the physics is unchanged
+  for every other level.
+- **Tests:** `tools/test-jungle-core.js`, `tools/test-jungle.js`, plus the jungle sections in `test-unlock.js` and `e2e.js`.

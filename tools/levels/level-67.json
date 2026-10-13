@@ -1,0 +1,18 @@
+{
+  "id": 67,
+  "name": "Supply Run",
+  "theme": "jungle",
+  "hint": "The expedition's jeep has arrived - more than a tonne and a half, far heavier than anything else in the jungle. Bamboo and Liana will not carry it alone: mix in Wood and Steel where the loads are highest.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 44, "rightY": 0, "floorY": -18, "waterY": -10 },
+  "anchors": [ { "x": 0, "y": 0 }, { "x": 44, "y": 0 }, { "x": 0, "y": -5 }, { "x": 44, "y": -5 } ],
+  "pierZones": [ { "x0": 20, "x1": 24 } ],
+  "maxPiers": 1,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 44, "y0": -10, "y1": 14 },
+  "materials": [ "walkway", "road", "bamboo", "liana", "rope", "wood", "steel" ],
+  "budget": 10050,
+  "traffic": [ { "type": "jeep", "count": 2, "interval": 4 }, { "type": "oxcart", "count": 1, "interval": 4 } ],
+  "timeLimit": 85,
+  "templates": true,
+  "jungle": { "canoes": 1 }
+}

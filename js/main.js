@@ -221,7 +221,7 @@
       const name = matName(fb.m).toLowerCase();
       const kN = Math.round(Math.abs(fb.force || 0) / 1000);
       const p = { name, kN: I() ? I().num(kN) : kN };
-      if (fb.mode === 'bending') text += ' ' + t(railMaterial(fb.m) ? 'results.why.bendTrack' : 'results.why.bendRoad', p);
+      if (fb.mode === 'bending') text += ' ' + t(railMaterial(fb.m) ? 'results.why.bendTrack' : fb.m === 'walkway' ? 'results.why.bendWalkway' : 'results.why.bendRoad', p);
       else if (fb.mode === 'compression') text += ' ' + t('results.why.compression', p);
       else text += ' ' + t('results.why.tension', p);
     }
@@ -1127,7 +1127,7 @@
       campaignOrder().forEach(c => { wasOpen[c] = campaignOpen(c); });
       // levels of this campaign that were locked before the run (to spot ones this result opens by skipping)
       const campList = unlockList(lv);
-      // branching bonus chapters this result opens (Anchorages after level 40)
+      // branching bonus chapters this result opens (Anchorages after level 40, Jungle after level 30)
       const bonusFirst = b => levels().find(l => l && l.id === b.first);
       const bonusWasShut = bonusChapters().filter(b => bonusFirst(b) && !this.isUnlocked(b.first));
       const inCampaign = campList.indexOf(lv) >= 0;
@@ -1168,7 +1168,8 @@
       // a hidden bonus chapter revealed by this result (Anchorages after level 40)
       bonusOpened.forEach((b, i) => setTimeout(() => {
         if (this.state !== 'results') return;
-        hudCall('toast', t('results.toast.bonus', { name: bonusName(b), from: b.first, to: b.last }), 'good', 5200);
+        const kb = 'results.toast.bonus.' + b.id;
+        hudCall('toast', t(I() && I().has(kb, 'en') ? kb : 'results.toast.bonus', { name: bonusName(b), from: b.first, to: b.last }), 'good', 5200);
       }, 1500 + (opened.length + i) * 1800));
       // explain the unlock rule the moment it lets the player skip ahead
       skipOpened.forEach((l, i) => setTimeout(() => {

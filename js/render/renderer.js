@@ -3717,6 +3717,7 @@
 
   // little ship sailing through channel zones (drawn before the water so its hull is submerged)
   R._drawShips = function (ctx) {
+    if (this.theme.ships === false) return; // jungle: canoes replace the container ship (jungle-fx.js)
     const L = this.level, t = L.terrain;
     if (t.waterY === null || t.waterY === undefined || this.theme.lava) return;
     const zones = L.noBuild || [];

@@ -15,6 +15,9 @@
     'vehicles.material.rail': 'Rail Track',
     'vehicles.material.masonry': 'Masonry',
     'vehicles.material.girder': 'Box Girder',
+    'vehicles.material.walkway': 'Bamboo Walkway',
+    'vehicles.material.bamboo': 'Bamboo',
+    'vehicles.material.liana': 'Liana',
 
     // ---- road vehicles (BG.Vehicles[type].name) and their counts
     'vehicles.road.car': 'Car',
@@ -31,6 +34,18 @@
     'vehicles.road.semi.count': { one: '{n} semi trailer', other: '{n} semi trailers' },
     'vehicles.road.tanker.count': { one: '{n} tanker', other: '{n} tankers' },
     'vehicles.road.heavy.count': { one: '{n} crane carrier', other: '{n} crane carriers' },
+    'vehicles.road.walker': 'Porter',
+    'vehicles.road.monkey': 'Monkey',
+    'vehicles.road.handcart': 'Hand Cart',
+    'vehicles.road.oxcart': 'Ox Cart',
+    'vehicles.road.jeep': 'Jeep',
+    'vehicles.road.livingstone': 'Dr Livingstone',
+    'vehicles.road.walker.count': { one: '{n} porter', other: '{n} porters' },
+    'vehicles.road.monkey.count': { one: '{n} monkey', other: '{n} monkeys' },
+    'vehicles.road.handcart.count': { one: '{n} hand cart', other: '{n} hand carts' },
+    'vehicles.road.oxcart.count': { one: '{n} ox cart', other: '{n} ox carts' },
+    'vehicles.road.jeep.count': { one: '{n} jeep', other: '{n} jeeps' },
+    'vehicles.road.livingstone.count': { one: '{n} Dr Livingstone', other: '{n} Dr Livingstone' },
 
     // ---- rolling stock (BG.RailCars[type].name)
     'vehicles.car.handcar': 'Handcar',

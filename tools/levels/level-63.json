@@ -1,0 +1,18 @@
+{
+  "id": 63,
+  "name": "Market Day",
+  "theme": "jungle",
+  "hint": "Market day: an ox cart is coming, and an ox weighs as much as fifteen porters. Build a bamboo truss under the deck, and put Wood where the struts are squeezed hardest if it buckles.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 24, "rightY": 0, "floorY": -12, "waterY": -7 },
+  "anchors": [ { "x": 0, "y": 0 }, { "x": 24, "y": 0 }, { "x": 0, "y": -4 }, { "x": 24, "y": -4 } ],
+  "pierZones": [ { "x0": 10, "x1": 14 } ],
+  "maxPiers": 1,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 24, "y0": -7, "y1": 10 },
+  "materials": [ "walkway", "bamboo", "liana", "rope", "wood" ],
+  "budget": 2400,
+  "traffic": [ { "type": "walker", "count": 4, "interval": 1.5 }, { "type": "handcart", "count": 2, "interval": 3 }, { "type": "oxcart", "count": 1, "interval": 4 } ],
+  "timeLimit": 90,
+  "templates": true,
+  "jungle": { "canoes": 1 }
+}

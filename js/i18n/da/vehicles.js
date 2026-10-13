@@ -14,6 +14,9 @@
     'vehicles.material.rail': 'Jernbanespor',
     'vehicles.material.masonry': 'Murværk',
     'vehicles.material.girder': 'Kassedrager',
+    'vehicles.material.walkway': 'Bambusgangbro',
+    'vehicles.material.bamboo': 'Bambus',
+    'vehicles.material.liana': 'Lian',
 
     // ---- vejkøretøjer og antal
     'vehicles.road.car': 'Bil',
@@ -30,6 +33,18 @@
     'vehicles.road.semi.count': { one: '{n} sættevogn', other: '{n} sættevogne' },
     'vehicles.road.tanker.count': { one: '{n} tankbil', other: '{n} tankbiler' },
     'vehicles.road.heavy.count': { one: '{n} mobilkran', other: '{n} mobilkraner' },
+    'vehicles.road.walker': 'Bærer',
+    'vehicles.road.monkey': 'Abe',
+    'vehicles.road.handcart': 'Trækvogn',
+    'vehicles.road.oxcart': 'Oksekærre',
+    'vehicles.road.jeep': 'Jeep',
+    'vehicles.road.livingstone': 'Dr. Livingstone',
+    'vehicles.road.walker.count': { one: '{n} bærer', other: '{n} bærere' },
+    'vehicles.road.monkey.count': { one: '{n} abe', other: '{n} aber' },
+    'vehicles.road.handcart.count': { one: '{n} trækvogn', other: '{n} trækvogne' },
+    'vehicles.road.oxcart.count': { one: '{n} oksekærre', other: '{n} oksekærrer' },
+    'vehicles.road.jeep.count': { one: '{n} jeep', other: '{n} jeeps' },
+    'vehicles.road.livingstone.count': { one: '{n} Dr. Livingstone', other: '{n} Dr. Livingstone' },
 
     // ---- rullende materiel
     'vehicles.car.handcar': 'Dræsine',

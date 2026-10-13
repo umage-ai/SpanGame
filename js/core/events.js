@@ -61,6 +61,10 @@
     rope: { cd: 1.2, depth: 0.35 },
     cable: { cd: 1.2, depth: 0.6 },
     masonry: { cd: 1.3, depth: 1.0 },
+    // jungle (SPEC-JUNGLE §3): a light 1.2 m footbridge deck, not the 9 m road chord
+    walkway: { cd: 1.2, depth: 0.3, chord: 1.2, cl: 0.6 },
+    bamboo: { cd: 1.2, depth: 0.2 },
+    liana: { cd: 1.2, depth: 0.08 },
   };
   const DECK = { cd: 1.5, depth: 1.4, chord: 9, cl: 1 };
   const OTHER = { cd: 1.3, depth: 0 };
@@ -363,7 +367,7 @@
     for (const v of sim.vehicles) {
       if (!v._sim || !v.def || !(v._invM > 0)) continue; // (road vehicles; other kinds, e.g. trains, opt in by the same fields)
       const rx = this._windAt(sim.time + 0.5 / 60, v._px) - v._vx;
-      const A = VEH_WIDTH * v.def.height;
+      const A = (v.def.width > 0 ? v.def.width : VEH_WIDTH) * v.def.height; // def.width: jungle traffic
       v._vx += 0.5 * RHO * VEH_CD * A * rx * Math.abs(rx) * v._invM * h;
     }
   };
