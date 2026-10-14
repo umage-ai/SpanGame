@@ -9,6 +9,7 @@
   const DERAIL_SLOWMO = 0.5;   // s (real time) of slow motion when a train first derails
   const DERAIL_SLOW = 0.08;    // sim speed during it
   const DERAIL_EASE = 0.35;    // s to ease back to the chosen speed
+  const UPROOT_LEAD = 1.5;     // s: a member breaking this close before a tree uproots broke because the tree leaned
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function nowMs() { return root.performance ? performance.now() : Date.now(); }
@@ -217,11 +218,12 @@
       title = t('results.title.failed');
       text = t('results.fail.generic');
     }
-    // what gave way first, and why (teaches reading the stress map)
+    // what gave way first, and why (teaches reading the stress map). On an uprooted run a member that broke less than
+    // UPROOT_LEAD before the roots let go broke because the tree leaned, so only an earlier break is explained.
     const fb = c.firstBreak, ft = c.firstTopple;
     if (!c.passed && !c.simOk && ft && (!fb || ft.time <= fb.time)) {
       text += ' ' + t('results.why.topple');
-    } else if (!c.passed && !c.simOk && fb && !(c.reason === 'uprooted' && c.firstUproot && fb.time > c.firstUproot.time)) {
+    } else if (!c.passed && !c.simOk && fb && !(c.reason === 'uprooted' && c.firstUproot && fb.time > c.firstUproot.time - UPROOT_LEAD)) {
       const name = matName(fb.m).toLowerCase();
       const kN = Math.round(Math.abs(fb.force || 0) / 1000);
       const p = { name, kN: I() ? I().num(kN) : kN };

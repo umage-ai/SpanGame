@@ -99,3 +99,10 @@ body[data-state="sim"] .goals-panel.open, body[data-state="results"] .goals-pane
   .ch-challenges { margin-left: 6px; }
 }
 @media (max-width: 420px) { .ls-right { gap: 6px; } .ls-right .chip-lg { padding: 0 9px; } }
+/* phone portrait: the gold stars, the history button and two teal totals overflow the header; keep the active campaign's
+   challenge total there (the all-campaign total stays on the title screen) */
+.m-phone.m-portrait .ls-right .badge-chip { display: none; }
+/* phone portrait level bar: the pips stack two to a row so four of them leave the cost readout room */
+.m-phone.m-portrait .goals-btn { padding: 0 7px; }
+.m-phone.m-portrait .goals-pips { display: grid; grid-template-columns: repeat(2, auto); gap: 1px 2px; }
+.m-phone.m-portrait .goals-pips .chal-star { width: 14px; height: 14px; }

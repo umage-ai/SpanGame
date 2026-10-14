@@ -865,3 +865,13 @@ UI also adds to the Danish glossary comment in `js/i18n/da/core.js`:
   10 m. No `trees_only` is offered on 69/70: 69 has no cliff bolts, and on 70 no passing design avoided them.
 - **INTEGRATOR — 65 and 66 keep 2 challenges.** No design type is provable on them (65: see LEVELS-RETROFIT; 66:
   none achievable), and the append-only rule forbids replacing a shipped type.
+- **REVIEW — uprooted results text (§1.6).** A walkway on an unguyed tree kinks a fraction of a second before the roots
+  let go (69 without its guys: deck breaks at 42.7 s, the tree uproots at 43.1 s), so "break before uproot" appended
+  a misleading walkway-spacing tip. `resultText` now explains a first break only when it came more than
+  `UPROOT_LEAD` (1.5 s) before the first uproot.
+- **REVIEW — temple stone is sandstone.** The `jungle_temple` ruin pillars (`ruin_pillar.svg`, `ruin_cap.svg`), the
+  temple abutment stones and the level-tile thumbnail pillars were a grey close to the concrete `#c4c6c4`. They are now
+  a weathered sandstone matching the painted temple, so no jungle pillar reads as concrete (the user's request).
+- **REVIEW — phone portrait.** The level-select header showed both teal totals and overflowed at 390 px; on phone
+  portrait only the active campaign's chip is shown (the global total stays on the title screen). The level bar's
+  four pips stack 2 x 2 there, so the cost readout no longer runs into the hint button.

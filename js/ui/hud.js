@@ -501,8 +501,8 @@
         s += '<path d="M' + ax + ' ' + base + ' V' + cy + '" stroke="#5a3a22" stroke-width="2.2"/>';
         s += '<circle cx="' + ax + '" cy="' + cy + '" r="7" fill="#2f7a35"/><circle cx="' + (ax - 3) + '" cy="' + (cy - 2) + '" r="4.5" fill="#4a9c45"/>';
       } else if (a.deco === 'ruin') {
-        s += '<path d="M' + (ax - 1.6) + ' ' + base + 'V' + sy(a.y) + 'h3.2V' + base + 'Z" fill="#a39a80" stroke="#5f5a48" stroke-width=".4"/>';
-        s += '<path d="M' + (ax - 2.2) + ' ' + (sy(a.y) - 0.8) + 'h4.4v1h-4.4Z" fill="#8a826a"/>';
+        s += '<path d="M' + (ax - 1.6) + ' ' + base + 'V' + sy(a.y) + 'h3.2V' + base + 'Z" fill="#b49a6a" stroke="#6a5838" stroke-width=".4"/>';
+        s += '<path d="M' + (ax - 2.2) + ' ' + (sy(a.y) - 0.8) + 'h4.4v1h-4.4Z" fill="#97805a"/>';
       }
     });
     (level && level.pierZones || []).forEach(z => {

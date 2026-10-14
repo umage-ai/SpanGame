@@ -515,7 +515,7 @@
         for (let x = ab0 - off; x < ab1; x += 0.9) {
           const a = Math.max(x, ab0), b = Math.min(x + 0.9, ab1); if (b - a < 0.05) continue;
           const r = U.hash(Math.round(x * 13) + i * 7 + Math.round(edge));
-          g.fillStyle = mix('#a39a80', '#7d7560', r * 0.6);
+          g.fillStyle = mix('#b49a6a', '#8a7450', r * 0.6); // weathered sandstone, like the temple behind (not concrete grey)
           g.fillRect(a + 0.02, yy + 0.02, b - a - 0.04, hRow - 0.04);
           g.fillStyle = 'rgba(255,250,230,0.18)'; g.fillRect(a + 0.02, yy + hRow - 0.08, b - a - 0.04, 0.06);
           if (r < 0.35) { g.fillStyle = 'rgba(70,120,50,0.55)'; g.beginPath(); g.ellipse((a + b) / 2, yy + hRow - 0.04, (b - a) * 0.35, 0.07, 0, 0, TAU); g.fill(); }
