@@ -3,6 +3,8 @@
 //   BG.Goals.metrics(level, design, simSummary)  -> measurable facts about the design/run
 //   BG.Goals.forLevel(levelOrId)                 -> goal specs [{type, ...params}] (from BG.GoalsData, js/features/goals-data.js)
 //   BG.Goals.register(levelId, specs)            -> add/replace goal specs at runtime (campaigns, e.g. Iron Road 101-120)
+// Design challenges (docs/challenges/SPEC-CHALLENGES.md §3): stock, no_material, max_joints, trees_only, no_stakes.
+// A TYPE may carry title(p) (a parametrised name) and an icon that is a function p => string.
 // A badge is only ever awarded for a run that passed the level (sim success AND cost <= budget).
 (function (root) {
   'use strict';
@@ -79,7 +81,52 @@
       desc: () => t('features.goals.no_piers.desc'),
       check: m => ({ met: m.piers === 0, value: m.piers, target: 0, text: m.piers ? t('features.goals.no_piers.progress', { n: m.piers }) : t('features.goals.no_piers.done'), frac: m.piers ? 0 : 1 }),
     },
+    // ---- design challenges (docs/challenges/SPEC-CHALLENGES.md §3): all judged from the design alone ----
+    stock: {
+      icon: 'stock', live: true,
+      title: p => t('features.goals.stock.name', matParams(p.material)),
+      desc: p => t('features.goals.stock.desc', Object.assign({ len: metres(p.maxLen) }, matParams(p.material))),
+      check: (m, p) => {
+        const used = (m.length && m.length[p.material]) || 0;
+        return { met: used <= p.maxLen + 1e-9, value: used, target: p.maxLen, text: t('features.goals.stock.progress', Object.assign({ used: metres(Math.round(used)), len: metres(p.maxLen) }, matParams(p.material))), frac: frac(p.maxLen, used) };
+      },
+    },
+    no_material: {
+      icon: p => 'no_' + p.material, live: true,
+      title: p => t('features.goals.no_material.name', matParams(p.material)),
+      desc: p => t('features.goals.no_material.desc', matParams(p.material)),
+      check: (m, p) => {
+        const n = m.count[p.material] || 0;
+        return { met: n === 0, value: n, target: 0, text: n ? t('features.goals.no_material.progress', Object.assign({ n }, matParams(p.material))) : t('features.goals.no_material.done', matParams(p.material)), frac: n ? 0 : 1 };
+      },
+    },
+    max_joints: {
+      icon: 'joints', live: true,
+      desc: p => t('features.goals.max_joints.desc', { max: p.max }),
+      check: (m, p) => ({ met: m.joints <= p.max, value: m.joints, target: p.max, text: t('features.goals.max_joints.progress', { n: m.joints, max: p.max }), frac: frac(p.max, m.joints) }),
+    },
+    trees_only: {
+      icon: 'trees', live: true,
+      desc: () => t('features.goals.trees_only.desc'),
+      check: m => ({ met: m.boltMembers === 0, value: m.boltMembers, target: 0, text: m.boltMembers ? t('features.goals.trees_only.progress', { n: m.boltMembers }) : t('features.goals.trees_only.done'), frac: m.boltMembers ? 0 : 1 }),
+    },
+    no_stakes: {
+      icon: 'nostakes', live: true,
+      desc: () => t('features.goals.no_stakes.desc'),
+      check: m => ({ met: m.stakeMembers === 0, value: m.stakeMembers, target: 0, text: m.stakeMembers ? t('features.goals.no_stakes.progress', { n: m.stakeMembers }) : t('features.goals.no_stakes.done'), frac: m.stakeMembers ? 0 : 1 }),
+    },
   };
+  // material names in texts: English keeps the game's capitalised name, other languages (Danish) use it lowercase
+  // inside a sentence. Both dictionaries use {material} (the lint wants identical params); materialLc is also given.
+  function matParams(id) {
+    const mat = BG.Materials && BG.Materials[id];
+    const name = mat ? mat.name : String(id);
+    const lc = name.toLocaleLowerCase();
+    return { material: BG.i18n && BG.i18n.lang() !== 'en' ? lc : name, materialLc: lc };
+  }
+  function metres(v) { return BG.i18n ? BG.i18n.meters(v, 0) : v + ' m'; }
+  // materials the 'no_material' challenge can be offered for (one icon each; never steel or a deck material)
+  const NO_MATERIAL_ICONS = ['liana', 'bamboo', 'rope', 'wood'];
   Object.keys(TYPES).forEach(id => {
     const k = 'features.goals.' + id + '.name';
     Object.defineProperty(TYPES[id], 'name', { enumerable: true, configurable: true, get: () => t(k) });
@@ -117,6 +164,25 @@
     return miss;
   }
 
+  // anchor classification: Model.is*AnchorId (SPEC-CHALLENGES §1.4) when present, else straight from the level data
+  function anchorOf(level, id) {
+    const m = /^a(\d+)$/.exec(id);
+    return m ? ((level && level.anchors) || [])[+m[1]] || null : null;
+  }
+  function isDeco(level, id, deco) {
+    const f = deco === 'stake' ? BG.Model.isStakeAnchorId : BG.Model.isTreeAnchorId;
+    if (f) return !!f(level, id);
+    const a = anchorOf(level, id);
+    return !!a && a.deco === deco;
+  }
+  function isBolt(level, id) {
+    if (BG.Model.isBoltAnchorId) return !!BG.Model.isBoltAnchorId(level, id);
+    const a = anchorOf(level, id);
+    if (!a || a.deco) return false;
+    const ra = BG.Model.roadAnchors(level);
+    return id !== ra.left && id !== ra.right;
+  }
+
   function metrics(level, design, sim) {
     const M = BG.Model, mats = BG.Materials || {};
     design = design || { nodes: [], beams: [], piers: [] };
@@ -136,11 +202,26 @@
     const simOk = !!sim && sim.status === 'success';
     // ride quality of a railway run: a summary may carry it (.ride), or the run object its sim (.sim.ride)
     const ride = sim && (sim.ride || (sim.sim && sim.sim.ride)) || null;
+    // design-challenge facts: material lengths, user joints, members on bolts / stakes, tree and stake anchors
+    const length = {}, userJoints = new Set();
+    let boltMembers = 0, stakeMembers = 0;
+    for (const b of design.beams || []) {
+      const A = nodes[b.a], B = nodes[b.b];
+      if (A && B) length[b.m] = (length[b.m] || 0) + Math.hypot(A.x - B.x, A.y - B.y);
+      for (const id of [b.a, b.b]) if (nodes[id] && nodes[id].kind === 'node') userJoints.add(id);
+      if (isBolt(level, b.a) || isBolt(level, b.b)) boltMembers++;
+      if (isDeco(level, b.a, 'stake') || isDeco(level, b.b, 'stake')) stakeMembers++;
+    }
+    for (const k in length) length[k] = Math.round(length[k] * 100) / 100;
+    const anchors = (level && level.anchors) || [];
     return {
+      length, joints: userJoints.size, boltMembers, stakeMembers,
+      trees: anchors.filter(a => a.deco === 'tree').length, stakes: anchors.filter(a => a.deco === 'stake').length,
       members: (design.beams || []).length,
       cost, budget, costRatio: budget === Infinity ? 0 : round3(cost / budget),
       mass: Math.round(mass),
-      peak: sim && sim.peakStress != null ? sim.peakStress : null,
+      // a flexible tree's root load counts as stress for the cool head (SPEC-CHALLENGES §1.8)
+      peak: sim && sim.peakStress != null ? (sim.peakRoot != null ? Math.max(sim.peakStress, sim.peakRoot) : sim.peakStress) : null,
       ride: ride && typeof ride.kinkRatio === 'number' ? Math.round(ride.kinkRatio * 1000) / 1000 : null,
       piers: (design.piers || []).length,
       count, materials,
@@ -161,7 +242,9 @@
 
   function describe(spec) {
     const T = TYPES[spec.type];
-    return { id: spec.type, type: spec.type, name: T ? T.name : spec.type, icon: T ? T.icon : spec.type, desc: T ? T.desc(spec) : '', live: T ? T.live : false };
+    const name = !T ? spec.type : T.title ? T.title(spec) : T.name;
+    const icon = !T ? spec.type : typeof T.icon === 'function' ? T.icon(spec) : T.icon;
+    return { id: spec.type, type: spec.type, name, icon, desc: T ? T.desc(spec) : '', live: T ? T.live : false };
   }
 
   // Evaluates every goal of the level. Goals are only 'met' on a passing run (see header).
@@ -180,5 +263,5 @@
     return { passed: m.passed, metrics: m, goals, earned: goals.filter(g => g.met).map(g => g.id) };
   }
 
-  BG.Goals = { TYPES, metrics, evaluate, forLevel, register, describe, asymmetry };
+  BG.Goals = { TYPES, metrics, evaluate, forLevel, register, describe, asymmetry, NO_MATERIAL_ICONS };
 })(typeof window !== 'undefined' ? window : globalThis);

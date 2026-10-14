@@ -18,7 +18,7 @@ The one rule that matters most: **a level is not finished until `node tools/veri
 6. Generate and prove the challenge badges: `node tools/gen-goals.js --only NN`, then `node tools/test-goals.js`.
 7. Run `node tools/test-templates.js` to make sure no template earns three stars, then `node tools/gen-precache.js` (levels.js is a shipped file) and the rest of the suites ([TESTING.md](TESTING.md)).
 
-Ids: Roads use 1–58 (`level-01.json` … with two-digit padding below 100), the Iron Road 101–120, Famous Bridges 201–212. Pick a free range for a new campaign.
+Ids: Roads use 1–70 (`level-01.json` … with two-digit padding below 100), the Iron Road 101–120, Famous Bridges 201–212. Pick a free range for a new campaign.
 
 ## Level JSON reference
 
@@ -74,6 +74,8 @@ Coordinates are metres, with **y up**. The left bank's road surface usually sits
 | `rail` | `{maxGrade, maxKinkDeg}` overrides the derailment limits (defaults 0.06 and 4°) |
 | `events` | wind and earthquake events, see below |
 | `terrain.ceiling` | `{kind, y?, from?}` draws what caps the build area as scenery: `rock` (an overhanging ledge), `ice` (a glacier), `cave` (a cave roof) or `girder` (a bridge above). Cosmetic only. A level whose `buildArea.y1` is within 5 m of the deck gets one even without the field (kind by theme), except on Famous Bridges; name the kind so it matches the hint, or set `false` for none. It is never drawn lower than the tallest traffic can pass, so a cap below the vehicles' roofs shows the scenery a little higher than the limit (the band between is hatched in the editor). See SPEC §19 |
+| `anchors[].deco` | look only: `"tree"`, `"ruin"` (jungle themes) or `"stake"` (a ground stake: a plain fixed anchor on a bank top, 3–6.5 m behind the gap edge, drawn as a wooden peg; append stakes after the existing anchors so saved designs keep their ids) |
+| `anchors[].tree` | `{}` (or `true`) on a `deco: "tree"` anchor makes it a **flexible tree**: a rigid trunk on an elastic-plastic root spring that leans with the pull and is uprooted (failing the run) past `uprootTilt`. Optional keys `baseX`, `baseY` (root base), `stiffness`, `rootLimit`, `uprootTilt`, `topMass`; defaults in `BG.TreeAnchor`. Without `tree` a tree is a rigid anchor. Spec: [challenges/SPEC-CHALLENGES.md](challenges/SPEC-CHALLENGES.md) §1 |
 | `anchors[].inland` | `true` marks an inland anchor: a deadman block in a bank top, or (with `y` above the bank) an anchor block set into a hillside |
 | `pierZones[].ground` | `"left"` or `"right"`: a land pier zone on that bank, where piers become land pylons (optional `footing`: the footing's moment limit in N·m) |
 | `roadClearance` | the roadway clearance envelope on the banks switches on by itself when a level has inland anchors or land pier zones; a number sets its height in metres, `false` turns it off |
@@ -155,6 +157,7 @@ Related checks:
 | `tools/test-goals.js` | every shipped badge still has a design that earns it |
 | `tools/test-events.js` | weather levels; levels without events simulate bit-identically to the engine without them |
 | `tools/test-anchors.js` | inland anchors, land pylons and the roadway envelope |
+| `tools/test-tree-anchors.js` | flexible trees and ground stakes: lean, uproot, guy ropes, determinism, levels without trees unchanged |
 | `tools/test-famous.js` | Famous Bridges data: history cards complete, art files exist, stubs stay locked |
 
 ## Challenge badges

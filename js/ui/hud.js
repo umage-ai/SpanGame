@@ -405,8 +405,8 @@
     // hidden bonus chapter that branches off after level 40 (rules: BG.Storage.CAMPAIGNS.road.bonus); Forces of Nature
     // (n 7, 51-53) is added by js/features/forces-fx.js
     { n: 8, key: 'anchorages', from: 54, to: 58, theme: 'autumn', hidden: true },
-    // Jungle (59-68, opens after level 30)
-    { n: 9, key: 'jungle', from: 59, to: 68, theme: 'jungle', hidden: true },
+    // Jungle (59-70, opens after level 30)
+    { n: 9, key: 'jungle', from: 59, to: 70, theme: 'jungle', hidden: true },
   ].map(chapterText);
 
   function levelsList() { return Array.isArray(BG.Levels) ? BG.Levels : []; }
@@ -880,6 +880,7 @@
               <div class="sb-sep"></div>
               <div class="sb-stat">${icon('clock')}<b data-ref="simTime">0.0</b><span data-ref="simLimit"></span></div>
               <div class="sb-stat">${icon('flag')}<b data-ref="simVeh">0/0</b><span data-i18n="hud.sim.across"></span></div>
+              <div class="sb-stat sb-roots" data-ref="simRoots" hidden data-i18n-title="features.jungle.tree.roots"></div>
               <div class="sb-sep"></div>
               <button class="btn btn-ghost sb-btn toggle" data-act="follow" data-i18n-title="hud.sim.followTip">${icon('follow')}<span data-i18n="hud.sim.follow"></span></button>
               <button class="btn btn-ghost sb-btn toggle" data-act="track" data-i18n-title="hud.sim.trackTip">${icon('track')}<span data-i18n="hud.sim.track"></span></button>
@@ -934,7 +935,7 @@
       });
       this.el.level = el;
       const r = s => $('[data-ref=' + s + ']', el);
-      ['lvlNum', 'lvlName', 'lvlSub', 'budget', 'cost', 'budgetV', 'fill', 'traffic', 'rail', 'tplWrap', 'tplMenu', 'palette', 'simbar', 'speed',
+      ['simRoots', 'lvlNum', 'lvlName', 'lvlSub', 'budget', 'cost', 'budgetV', 'fill', 'traffic', 'rail', 'tplWrap', 'tplMenu', 'palette', 'simbar', 'speed',
         'simTime', 'simLimit', 'simVeh', 'hint', 'hintText', 'results', 'resBanner', 'resStars', 'resTitle', 'resReason', 'resStats', 'resBudget', 'pillText',
         'track', 'trackCanvas', 'derail', 'dcTitle', 'dcCar', 'dcCause', 'dcAdvice', 'resRail']
         .forEach(k => { this.el[k] = r(k); });
@@ -1245,12 +1246,19 @@
         const st = sim ? (+sim.time || 0) : 0;
         const vt = sim && sim.vehicles ? sim.vehicles.length : 0;
         const vf = sim && sim.vehicles ? sim.vehicles.filter(v => v.state === 'finished').length : 0;
-        const sigS = st.toFixed(1) + '|' + vf + '/' + vt + '|' + !!g.paused + '|' + g.speed + '|' + !!(g.settings && g.settings.showStress) + '|' + !!g.followOn + '|' + !!g.trackOn;
+        const trees = sim && sim.trees && sim.trees.length ? sim.trees : null;
+        const rootR = trees ? trees.reduce((m, x) => Math.max(m, x && x.ratio || 0), 0) : 0;
+        const sigS = (trees ? Math.round(rootR * 100) : '-') + '|' + st.toFixed(1) + '|' + vf + '/' + vt + '|' + !!g.paused + '|' + g.speed + '|' + !!(g.settings && g.settings.showStress) + '|' + !!g.followOn + '|' + !!g.trackOn;
         if (this._sig.sim !== sigS) {
           this._sig.sim = sigS;
           this.el.simTime.textContent = num(st, 1);
           this.el.simLimit.textContent = tl ? '/ ' + (I() ? I().time(tl, 0) : tl + ' s') : t('hud.sim.seconds');
           this.el.simVeh.textContent = vf + '/' + vt;
+          const rc = this.el.simRoots;
+          if (rc) {
+            rc.hidden = !trees;
+            if (trees) { rc.innerHTML = t('hud.sim.roots', { pct: '<b style="color:' + stressColor(Math.min(1, rootR)) + '">' + esc(pctOf(Math.round(rootR * 100) / 100)) + '</b>' }); rc.classList.toggle('warn', rootR >= 0.85); }
+          }
           const pb = $('[data-act=pause]', this.el.simbar);
           pb.innerHTML = g.paused ? icon('play') : icon('pause');
           pb.classList.toggle('on', !!g.paused);
@@ -1372,11 +1380,12 @@
     // info: {x, y (client px), title, color, rows:[[k,v,cls]], stress (0..), peak}
     showTooltip(info) {
       const tt = this.el.tooltip;
-      const sig = info.title + '|' + info.rows.map(r => r.join(':')).join('|') + '|' + info.stress;
+      const sig = info.title + '|' + info.rows.map(r => r.join(':')).join('|') + '|' + info.stress + '|' + (info.note || '');
       if (tt._sig !== sig) {
         tt._sig = sig;
         let html = '<div class="tt-head"><span class="tt-sw" style="background:' + esc(info.color || '#888') + '"></span><b>' + esc(info.title) + '</b></div>';
         html += '<div class="tt-rows">' + info.rows.map(r => '<span class="k">' + esc(r[0]) + '</span><span class="v ' + (r[2] || '') + '">' + esc(r[1]) + '</span>').join('') + '</div>';
+        if (info.note) html += '<div class="tt-note">' + esc(info.note) + '</div>';
         if (info.stress != null) {
           const s = clamp(Math.abs(info.stress), 0, 1.2);
           html += '<div class="tt-meter"><span style="width:' + (Math.min(1, s) * 100).toFixed(1) + '%;background:' + stressColor(s) + '"></span>' +
@@ -1461,7 +1470,7 @@
         [t('results.stat.peakStress'), pk != null ? pctOf(Math.round(pk * 100) / 100) : '—', pk != null && Math.round(pk * 100) >= 100 ? 'bad' : ''],
         [t('results.stat.time'), I() ? I().time(res.time || 0) : (res.time || 0).toFixed(1) + ' s', ''],
         [t('results.stat.broken'), String(res.brokenBeams || 0), res.brokenBeams ? 'bad' : 'good'],
-      ].map(r => '<div class="rs"><span>' + esc(r[0]) + '</span><b class="' + r[2] + '">' + esc(r[1]) + '</b></div>').join('');
+      ].concat(res.peakRoot != null ? [[t('results.stat.roots'), pctOf(Math.round(res.peakRoot * 100) / 100), Math.round(res.peakRoot * 100) >= 100 ? 'bad' : '']] : []).map(r => '<div class="rs"><span>' + esc(r[0]) + '</span><b class="' + r[2] + '">' + esc(r[1]) + '</b></div>').join('');
       $('.rb-cap', this.el.resBudget).textContent = t('results.budgetPct', { pct: pctOf(Math.round(pct * 100) / 100) });
       const nb = $('[data-act=next]', el);
       $('span', nb).textContent = res.hasNext ? t('results.next') : (campaignUi(res.campaign).allLabel || t('hud.camp.road.all'));

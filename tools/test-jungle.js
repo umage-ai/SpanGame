@@ -25,7 +25,7 @@ const ok = (c, msg, info) => { if (c) pass++; else { fail++; console.log('  FAIL
 const section = (s) => console.log('- ' + s);
 const args = process.argv.slice(2);
 const NODE = args.indexOf('--browser-only') < 0, BROWSER = args.indexOf('--node-only') < 0;
-const IDS = [59, 60, 61, 62, 63, 64, 65, 66, 67, 68];
+const IDS = [59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70];
 const jungleLevels = () => BG.Levels.filter(L => IDS.indexOf(L.id) >= 0);
 const sol = (n, kind) => {
   const f = path.join(__dirname, 'solutions', 'level-' + String(n).padStart(2, '0') + (kind ? '-' + kind : '') + '.json');
@@ -76,6 +76,23 @@ if (NODE) {
     ok(!!def && !!meta, t + ': a vehicle def and a sprite meta entry');
     ok(def && meta && Math.abs(meta.w - def.length * 100) < 1e-6, t + ': sprite width = def.length x 100', [meta && meta.w, def && def.length]);
     ok(def && BG.Renderer.drawnHeight(t) > 0, t + ': drawnHeight is known', def && BG.Renderer.drawnHeight(t));
+  }
+
+  section('trees: the drawn trunk base is Model.treeBase; poses are rigid turns about it');
+  {
+    let n = 0;
+    for (const L of jungleLevels()) (L.anchors || []).forEach((a, i) => {
+      if (a.deco !== 'tree') return;
+      n++;
+      const b = Fx.treeBase(L, i), mb = BG.Model.treeBase ? BG.Model.treeBase(L, i) : null;
+      ok(isFinite(b.x) && isFinite(b.y), L.id + ' a' + i + ': tree base is finite', b);
+      if (mb) ok(Math.abs(b.x - mb.x) < 1e-9 && Math.abs(b.y - (mb.y - 0.3)) < 1e-9, L.id + ' a' + i + ': drawn base = Model.treeBase (sunk 0.3 m)', [b, mb]);
+      const rest = Fx.treePose(L, a, i, null, null), live = Fx.treePose(L, a, i, null, { x: a.x + 0.4, y: a.y - 0.02, ratio: 0.5 });
+      ok(rest.delta === 0 && Math.abs(rest.top.x - rest.top0.x) < 1e-9, L.id + ' a' + i + ': rest pose has no turn');
+      ok(live.delta < 0 && live.top.x > rest.top.x, L.id + ' a' + i + ': a joint pulled to +x turns the crown to +x', live.delta);
+    });
+    ok(n >= 1, 'tree anchors exist on the jungle levels (' + n + ')');
+    ok(Fx.liveTrees({ _jst: null }) === null && Fx.liveTrees({ _jst: { mode: 'edit', sim: { trees: [{ anchor: 0, x: 0, y: 0 }] } } }) === null && !!Fx.liveTrees({ _jst: { mode: 'sim', sim: { trees: [{ anchor: 0, x: 0, y: 0 }] } } }), 'live trees only in sim / results');
   }
 
   section('cameo is deterministic');
@@ -223,6 +240,74 @@ async function browserPart() {
         ok(errs.length === 0, 'no page errors', errs.slice(0, 2));
         await page.close();
       }
+    }
+
+    section('timber piers, stakes, bending and uprooting trees (headless)');
+    {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+      const errs = [];
+      page.on('pageerror', e => errs.push(e.message));
+      page.on('console', m => { if (m.type() === 'error' || /[jungle-fx]/.test(m.text())) errs.push(m.text()); });
+      await page.goto(HREF + '?unlockall&noresume');
+      await page.waitForTimeout(1200);
+      const r = await page.evaluate(([d62, best67]) => {
+        const g = BG.Game, frame = g._frame, Fx = BG.JungleFx, out = {};
+        g._frame = function () {};
+        const R = () => g.renderer;
+        const edit = (L, design) => { for (let i = 0; i < 2; i++) R().render({ mode: 'edit', level: L, design, editorState: g.editor && g.editor.state, dt: 1 / 60 }); };
+        const open = (id) => { g.openLevel(id, { force: true, skipCard: true }); return BG.Levels.find(l => l.id === id); };
+        let spy = 0; const orig = BG.Renderer.prototype._drawPier; BG.Renderer.prototype._drawPier = function () { spy++; return orig.apply(this, arguments); };
+        const kinds = () => JSON.stringify(Fx.pierKinds);
+        // plain jungle: a trestle (tall pier) and a crib (short pier), and the edit ghost / invalid look
+        for (const id of [63, 67]) {
+          const L = open(id), z = L.pierZones[0], x = (z.x0 + z.x1) / 2, fy = L.terrain.floorY;
+          const h0 = Fx.pierHits;
+          edit(L, { nodes: [], beams: [], piers: [{ x, topY: fy + 8 }] });
+          edit(L, { nodes: [], beams: [], piers: [{ x, topY: fy + 2.2 }] });
+          const ctx = R().ctx || R().canvas.getContext('2d');
+          R()._worldXf(ctx, 0, 0);
+          R()._drawPierItem(ctx, { x, baseY: fy, topY: fy + 6 }, true, false); R()._drawPierItem(ctx, { x, baseY: fy, topY: fy + 6 }, true, true);
+          out['hits' + id] = Fx.pierHits - h0;
+        }
+        out.kinds = JSON.parse(kinds());
+        out.concrete = spy;
+        // the temple keeps its ruin pillar
+        { const L = open(64), z = L.pierZones && L.pierZones[0], pk = Fx.pierKinds.pillar; if (z) edit(L, { nodes: [], beams: [], piers: [{ x: (z.x0 + z.x1) / 2, topY: L.terrain.floorY + 6 }] }); out.pillar = Fx.pierKinds.pillar - pk; out.hasZone64 = !!z; }
+        out.concrete2 = spy;
+        // stakes and bending trees on 62 patched with flexible trees and stakes
+        { const L = BG.Levels.find(l => l.id === 62);
+          L.anchors[4].tree = {}; L.anchors[5].tree = {};
+          L.anchors.push({ x: -5, y: 0, deco: 'stake' }, { x: 37, y: 0, deco: 'stake' });
+          open(62);
+          
+          const s0 = Fx.stakes; edit(L, g.design);
+          out.stakes = Fx.stakes - s0;
+          g._replaceDesign(d62); g.setFollow(false); g._lastToggle = -1e9; g.startSim();
+          let t = performance.now(); for (let i = 0; i < 30; i++) { t += 100; frame.call(g, t); }
+          out.lean = g.sim.trees && g.sim.trees[0] ? g.sim.trees[0].lean : null; out.bent = Fx.treesBent; out.status = g.sim.status;
+          // an uprooted tree: weak roots
+          L.anchors[4].tree = { rootLimit: 1.5e4 }; L.anchors[5].tree = { rootLimit: 1.5e4 };
+          open(62); g._replaceDesign(d62); g.setFollow(false); g._lastToggle = -1e9; g.startSim();
+          t = performance.now(); for (let i = 0; i < 60 && g.sim.status === 'running'; i++) { t += 100; frame.call(g, t); }
+          for (let i = 0; i < 20; i++) { t += 100; frame.call(g, t); }
+          out.uprooted = g.sim.status === 'failed' && g.sim.failReason === 'uprooted'; out.up = Fx.treeUp;
+        }
+        // level 24 (not jungle) is unchanged
+        { const L = open(24); const h = Fx.hits, pk = JSON.stringify(Fx.pierKinds); edit(L, g.design); out.l24 = Fx.hits === h && JSON.stringify(Fx.pierKinds) === pk; }
+        BG.Renderer.prototype._drawPier = orig;
+        g._frame = frame;
+        return out;
+      }, [sol(62, 'best'), null]);
+      ok(r.hits63 > 0 && r.hits67 > 0, 'plain-jungle pier levels draw timber piers (63, 67)', r);
+      ok(r.kinds.trestle > 0 && r.kinds.crib > 0, 'a tall pier is a trestle and a short one a crib', r.kinds);
+      ok(r.concrete === 0 && r.concrete2 === 0, 'the concrete _drawPier is never called on a jungle level', [r.concrete, r.concrete2]);
+      ok(!r.hasZone64 || r.pillar > 0, 'level 64 still draws ruin pillars', r.pillar);
+      ok(r.stakes > 0, 'stakes are drawn as pegs (' + r.stakes + ')');
+      ok(r.status !== undefined && r.lean !== 0 && r.lean !== null && r.bent > 0, 'a 62 run has leaning, bent trees', [r.lean, r.bent, r.status]);
+      ok(r.uprooted && r.up > 0, 'an uprooted tree fails the run and renders', [r.uprooted, r.up]);
+      ok(r.l24, 'level 24 enters no jungle hook');
+      ok(errs.length === 0, 'no page errors', errs.slice(0, 3));
+      await page.close();
     }
 
     section('other themes never enter a jungle hook (level 24: edit, sim, results)');

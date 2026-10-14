@@ -463,6 +463,15 @@ the goal catalogue. A goal id is its type, unique per level.
 | `timber_only` | - | only road and wood |
 | `no_piers` | - | no piers |
 | `smooth_ride` | `max` | railway run: worst kink / limit (`sim.ride.kinkRatio`) <= max (needs a finished run) |
+| `stock` | `material`, `maxLen` (m) | total length of that material <= maxLen ("Short on {material}") |
+| `no_material` | `material` | no beam of that material (liana, bamboo, rope or wood; "No {material}") |
+| `max_joints` | `max` | user joints referenced by beams <= max ("Few Knots") |
+| `trees_only` | - | no member on a cliff bolt: only trees, stakes, ruins and the two road ends ("Tree Hugger") |
+| `no_stakes` | - | no member on a ground stake ("Free Standing") |
+
+The last five are the **design challenges** of [docs/challenges/SPEC-CHALLENGES.md](docs/challenges/SPEC-CHALLENGES.md) §3.
+On levels with flexible trees `cool_head` judges max(peak stress, peak root load). In the UI badges are called
+**challenge stars** (teal stars on tiles, build bar, results, chapter and campaign totals; SPEC-CHALLENGES §2).
 
 ### 11.3 Generation + proof
 `node tools/gen-goals.js` (parallel, a few minutes) builds a candidate pool per level from the reference/best solutions,
@@ -482,6 +491,8 @@ all-masonry variant of the stone-viaduct designs (106-110) derails or cracks, so
 The Anchorages bonus levels 54-58 (§17.7) were added at their merge (`--only 54,55,56,57,58`; 14 goals).
 The level select shows tile counts on every campaign tab (famous tiles too); the total chip counts all 90
 levels (248 goals; hidden bonus levels count once revealed).
+At feature/challenges-trees (§21) the design types were appended across the game with `node tools/gen-goals.js --keep`
+(shipped goals stay byte-identical while their proof still earns them; 2-4 goals per level): 350 goals on 102 levels.
 
 ### 11.4 Storage
 `BG.Storage.getBadges(id)`, `recordBadges(id, ids)` -> newly earned, `totalBadges()`, `maxBadges()`; key `span.v1.badges` =
@@ -1129,9 +1140,10 @@ unchanged (`verify-levels` output is identical).
 - Tests: `tools/test-ceiling.js` (which levels, heights, outline, cosmetic-only runs, generated crossings; in the
   browser every level renders and the drawn roofs of the traffic stay under the drawn ceiling).
 
-## 20. Bonus chapter "Jungle" (levels 59–68)
+## 20. Bonus chapter "Jungle" (levels 59–70)
 A hidden Roads chapter that opens when level 30 is complete (a branching bonus chapter, §15, registered in
-`CAMPAIGNS.road.bonus`; chapter 9 in the HUD). Full spec: [docs/jungle/SPEC-JUNGLE.md](docs/jungle/SPEC-JUNGLE.md).
+`CAMPAIGNS.road.bonus`; chapter 9 in the HUD). Full spec: [docs/jungle/SPEC-JUNGLE.md](docs/jungle/SPEC-JUNGLE.md);
+levels 69 Guy Ropes and 70 The Leaning Kapok (the new chapter finale; Dr Livingstone stays on 68) were added by §21.
 - **Materials:** `walkway` (light deck, `isRoad`), `bamboo` (light strut, early buckling), `liana` (cheap, weak tension).
 - **Traffic:** `walker`, `monkey`, `handcart`, `oxcart`, `jeep`, and the hidden `livingstone` (finale only).
 - **Themes:** `jungle`, `jungle_temple`. Tree and ruin anchors (`deco`), canoe channels and a waterfall
@@ -1140,3 +1152,23 @@ A hidden Roads chapter that opens when level 30 is complete (a branching bonus c
   Canoes and Dr Livingstone's lines are timed by `sim.time`, so they replay the same way; the physics is unchanged
   for every other level.
 - **Tests:** `tools/test-jungle-core.js`, `tools/test-jungle.js`, plus the jungle sections in `test-unlock.js` and `e2e.js`.
+
+## 21. Challenge stars, bending trees, stakes and timber piers (feature/challenges-trees)
+Full spec and the record of every deviation: [docs/challenges/SPEC-CHALLENGES.md](docs/challenges/SPEC-CHALLENGES.md).
+- **Flexible trees:** a jungle anchor with `tree: {}` (and `deco: 'tree'`) is a rigid trunk on an elastic-plastic root
+  spring (`BG.TreeAnchor`, per-anchor overrides; `BG.Model.treeSpec/treeBase/treeAnchors`). It leans with the pull and
+  is **uprooted** past `uprootTilt`, which fails the run (reason `uprooted`, event `tree_uproot`). `summary()` adds
+  `treesUprooted`, `firstUproot` and `peakRoot`, and `sim.trees` carries the live pose, on tree levels only; every
+  other level runs the same code as before. `verify-levels` fails an uprooting design and a reference with
+  `peakRoot` > 0.92.
+- **Ground stakes:** `deco: 'stake'` anchors appended behind the trees, for guy ropes. Plain fixed anchors, not land
+  features.
+- **Levels:** 61, 62 and 65 got bending trees and stakes (62 budget 2350, 65 budget 3050); new 69 and 70.
+- **Challenge stars:** badges are shown as teal stars on tiles, in the build bar, the results, and chapter and campaign
+  totals; storage is unchanged. New goal types `stock`, `no_material`, `max_joints`, `trees_only`, `no_stakes`
+  (§11.2). Goal sets are append-only: `gen-goals.js --keep` keeps every shipped type (byte-identical while its stored
+  proof still earns it) and appends proven design types up to 4 per level.
+- **Jungle visuals:** piers are lashed timber trestles and log cribs (A-frame log towers for land pylons) instead of
+  concrete; trees bend and uproot, stakes are wooden pegs (`js/features/jungle-fx.js`).
+- **Tests:** `tools/test-tree-anchors.js` (new), plus updates to test-goals, test-jungle, test-unlock, e2e, e2e-events
+  and e2e-goals.

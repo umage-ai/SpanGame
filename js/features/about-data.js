@@ -10,26 +10,26 @@
     "firstCommit": "2026-10-02",
     "asOf": "2026-10-14",
     "commits": 54,
-    "levels": 100,
+    "levels": 102,
     "campaigns": 3,
     "campaignLevels": {
-      "road": 68,
+      "road": 70,
       "rail": 20,
       "famous": 12
     },
-    "designs": 475,
-    "levelDesigns": 200,
-    "badgeDesigns": 275,
-    "testSuites": 35,
-    "nodeSuites": 20,
+    "designs": 554,
+    "levelDesigns": 204,
+    "badgeDesigns": 350,
+    "testSuites": 36,
+    "nodeSuites": 21,
     "browserSuites": 15,
     "languages": 2,
     "jsLines": {
-      "total": 36909,
-      "game": 27242,
-      "tools": 9667
+      "total": 38421,
+      "game": 28099,
+      "tools": 10322
     },
-    "jsFiles": 93,
+    "jsFiles": 94,
     "repo": "https://github.com/umage-ai/SpanGame",
     "releaseNotes": "https://github.com/umage-ai/SpanGame/releases/tag/v1.3.1",
     "agentic": {

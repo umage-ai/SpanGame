@@ -15,7 +15,7 @@ SPAN is a physics bridge-construction puzzle game. You build a bridge across a g
 
 It is plain HTML, CSS and JavaScript: no build step, no frameworks, no runtime dependencies. Open `index.html` and it runs, even straight from `file://`.
 
-- **100 hand-made levels** in three campaigns: Roads (with three hidden bonus chapters), the Iron Road railway campaign and Famous Bridges.
+- **102 hand-made levels** in three campaigns: Roads (with three hidden bonus chapters), the Iron Road railway campaign and Famous Bridges.
 - **A new crossing every day**, the same for everyone, plus an Endless mode. Every generated level is proven solvable before you see it.
 - **Plays anywhere:** mouse and keyboard, or touch on phones and tablets. Install it as an app and it works offline.
 
@@ -96,7 +96,7 @@ A new generated crossing every day, the same for everyone in every browser, from
 
 ![The level select: chapters of level tiles with stars and badge counts, and the Roads, Iron Road and Famous Bridges tabs](docs/screenshots/levels.jpg)
 
-Each level awards up to three stars for staying under budget, plus two or three optional **challenge badges** (Minimalist, Penny Pincher, Featherweight, Cool Head, Symmetric, No Steel, Timber Only, No Piers, Smooth Ride). Every badge is proven achievable with a saved design. Every test run is recorded: personal bests per level, a cost sparkline, lifetime stats, one-tap loading of any earlier design, autosave and resume, and save export / import.
+Each level awards up to three stars for staying under budget, plus two to four optional **challenge stars** (Minimalist, Penny Pincher, Featherweight, Cool Head, Symmetric, No Steel, Timber Only, No Piers, Smooth Ride, and design challenges that change the bridge you build: Short on Bamboo or Liana (a cap on how many metres you may use), No Liana / Bamboo / Rope / Wood, Few Knots (at most N joints), Tree Hugger (no cliff bolts) and Free Standing (no ground stakes)). Challenge stars show as teal stars on the level tiles, in the build bar and in the results, with chapter and campaign totals. Every challenge is proven achievable with a saved design. Every test run is recorded: personal bests per level, a cost sparkline, lifetime stats, one-tap loading of any earlier design, autosave and resume, and save export / import.
 
 ### About SPAN: an umage.ai demo
 
@@ -181,7 +181,7 @@ More detail on the rules, the badges, the daily challenge and every level is in 
 | **Roads** | 1–50 in six chapters | from the start | from a 10 m creek crossed with two planks to a 150 m span carrying tankers and heavy haulers |
 | ↳ *Forces of Nature* (bonus) | 51–53 | after level 50 | a hurricane, an M8 earthquake and a galloping deck in pulsing wind |
 | ↳ *Anchorages* (bonus) | 54–58 | after level 40 | land pylons, buried deadman anchors and backstays |
-| ↳ *Jungle* (bonus) | 59–68 | after level 30 | walkways, bamboo, liana and rope; trees and ruins as anchors; canoe channels, a waterfall and a monsoon |
+| ↳ *Jungle* (bonus) | 59–70 | after level 30 | walkways, bamboo, liana and rope; bending trees, ground stakes and ruins as anchors; canoe channels, a waterfall and a monsoon |
 | **Iron Road** | 101–120 in four lines | after level 10 | railway bridges for handcars up to 2000-tonne ore trains and 150 km/h expresses |
 | **Famous Bridges** | 201–212 | after level 15 | scaled-down real bridges, each with a history card |
 | **Daily Challenge** / **Endless** | generated | from the start | a proven-solvable crossing per day; endless ever-harder crossings |
@@ -222,7 +222,7 @@ The live site at https://umage-ai.github.io/SpanGame/ is deployed by [.github/wo
 You need Node 18 or later. The browser suites also need the dev dependency (`npm install` installs Playwright) and a local Chrome. Every browser check runs **headless**; nothing opens a window.
 
 ```sh
-npm test                  # Node-only suites: physics, all 100 levels, editor, templates, goals, events, generator, ...
+npm test                  # Node-only suites: physics, all 102 levels, editor, templates, goals, events, generator, ...
 npm run test:browser      # headless-Chrome suites: end-to-end runs, mobile layouts, PWA and offline
 npm run test:all          # both
 

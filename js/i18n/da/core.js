@@ -33,6 +33,7 @@
 //   (content) ledge -> klippeafsats   strut -> stiver   chord -> gurt   springing -> vederlag   spandrel -> svikkel
 //   cantilever -> udkragning / konsol   guy line -> bardun   crane carrier -> mobilkran   handcar -> dræsine
 //   tram -> sporvogn   high-speed train -> højhastighedstog   freight train -> godstog   bolt (cliff) -> bolt
+//   challenge star -> udfordringsstjerne   ground stake -> jordpløk (pløk)   uprooted -> rykket op med rode
 //
 // Numbers and units come from BG.i18n (1.234,5 · 4,5 m · 70 % · $31.975); never write them by hand.
 (function (root) {

@@ -116,4 +116,14 @@
    *  (N·m; a zone's `footing` overrides it): beyond that it yields, the pylon leans, and past ~3° it
    *  topples about its base - unless backstays take the pull. Cost as any pier, from the bank surface. */
   BG.LandPylon = { stiffness: 5e10, footingStiffness: 2e9, momentLimit: 3e5, massPerMeter: 900 };
+  /** Flexible tree anchors (docs/challenges/SPEC-CHALLENGES.md §1; opt-in per anchor via anchors[i].tree): a rigid
+   *  trunk from its root base to the anchor joint, with a soft rotational root spring (stiffness, N·m/rad). The roots
+   *  resist at most rootLimit (N·m); beyond that the tree keeps leaning (a permanent, plastic lean), and past
+   *  uprootTilt (rad from its rest direction) it is uprooted, which fails the run. topMass (kg) is the trunk mass
+   *  felt at the anchor joint; colStiffness (N) the trunk's axial EA; damp the fraction of the top's velocity
+   *  removed per substep. Tuned on a 62-like canopy (32 m gap, trees 8 m up, walkway deck on rope fans; see
+   *  tools/test-tree-anchors.js): porters lean ~1.3-1.9°, hand carts ~2.7° at ~65 % root load; an unguyed ox cart
+   *  uproots a tree (elastic up to ~4.2°, uprooted at 4.9°: a walkway deck kinks too much beyond that); a Rope guy
+   *  to a stake keeps the lean near 1°. Per tree, anchors[i].tree overrides any of these. */
+  BG.TreeAnchor = { stiffness: 1.5e6, rootLimit: 1.1e5, uprootTilt: 0.085, topMass: 80, colStiffness: 5e9, damp: 0.002 };
 })(typeof window !== 'undefined' ? window : globalThis);

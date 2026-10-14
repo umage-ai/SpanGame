@@ -66,6 +66,10 @@ Banks are solid: joints collide with the terrain, and the model rejects joints c
 
 On levels with land pier zones, a pier on a bank is a **land pylon**: a concrete column on a footing rather than a fixed point. Its top is a free joint held by a rigid column and an elastic-plastic footing spring that never resists more than its moment limit (300 kN·m by default). Pulled sideways by its stays it leans until its backstays take the load; with nothing to balance the pull it keeps turning, and past about 2.9° the footing tears out and the pylon falls. That is why the Anchorages chapter is about backstays.
 
+### Flexible trees
+
+A jungle tree anchor with a `tree` field (levels 61, 62, 65, 69 and 70) uses the same model with a rest angle: a rigid trunk from a root base to the anchor joint, held by an elastic-plastic root spring (`BG.TreeAnchor`: 1.5 MN·m/rad, a 110 kN·m root limit, uprooted 0.085 rad ≈ 4.9° from rest). Under a hung walkway the tree leans a degree or three and the deck sags with it; once the root moment reaches its limit the lean stays, and past the uproot tilt the roots give way, the trunk falls about its base and the run fails (`uprooted`). A guy rope from the tree back to a ground stake behind it takes the pull and keeps the lean under a degree. `summary()` adds `treesUprooted`, `firstUproot` and `peakRoot` (the worst root moment as a share of the limit) on such levels only; levels without trees run exactly the same code as before.
+
 ## Road vehicles
 
 Each vehicle is a **rigid body** (position, rotation, linear and angular velocity) with wheels. Masses range from a 1.2 t car to a 60 t heavy hauler; each wheel carries its share.
@@ -148,6 +152,7 @@ The solver keeps joint state in flat typed arrays and uses a broadphase for whee
 | road vehicles | `_buildVehicles`, `_solveVehicleContacts`, `_tyreVelocity` |
 | trains and derailment | `_makeTrain`, `_solveRailContacts`, `_solveCoupler`, `_trainTraction`, `_trainPost`, `_derail` |
 | land pylons | `_buildPylons`, `_solvePylons`, `_pylonPost` |
+| flexible trees | `_buildTrees`, `_solveTrees`, `_treePost`; `BG.Model.treeSpec` / `treeBase` |
 | wind and quakes | `js/core/events.js` |
 | tuning notes for level designers | the header of `js/core/trains.js` and `js/core/materials.js` |
 | physics tests | `tools/test-physics.js` |

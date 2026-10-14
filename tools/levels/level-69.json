@@ -1,0 +1,28 @@
+{
+  "id": 69,
+  "name": "Guy Ropes",
+  "theme": "jungle",
+  "hint": "Two kapok trees, one on each bank, and nothing else to hang from. Hang the walkway from the trees - then watch them lean. A tree only takes so much pull before its roots tear out. Run a guy rope from each tree back to the ground stake behind it and it will stand like a post.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 24, "rightY": 0, "floorY": -14, "waterY": -8 },
+  "anchors": [
+    { "x": 0, "y": 0 },
+    { "x": 24, "y": 0 },
+    { "x": 0, "y": 9, "deco": "tree", "tree": { "stiffness": 6e5, "rootLimit": 3.2e4 } },
+    { "x": 24, "y": 9, "deco": "tree", "tree": { "stiffness": 6e5, "rootLimit": 3.2e4 } },
+    { "x": -5, "y": 0, "deco": "stake" },
+    { "x": 29, "y": 0, "deco": "stake" }
+  ],
+  "pierZones": [],
+  "maxPiers": 0,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 24, "y0": -7, "y1": 13 },
+  "materials": [ "walkway", "liana", "rope", "bamboo" ],
+  "budget": 2050,
+  "traffic": [
+    { "type": "walker", "count": 6, "interval": 1.5 },
+    { "type": "handcart", "count": 2, "interval": 3 }
+  ],
+  "timeLimit": 80,
+  "templates": true,
+  "jungle": { "canoes": 1 }
+}

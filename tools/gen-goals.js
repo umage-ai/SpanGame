@@ -10,8 +10,13 @@
 // thresholds (member count, mass) are taken from the best candidate plus a little slack.
 //
 // Usage: node tools/gen-goals.js                 all levels (parallel worker processes), then writes goals-data.js
-//        node tools/gen-goals.js --only 3,4,5    just these levels (merges into the existing data)
+//        node tools/gen-goals.js --only 3,4,5    just these levels (merges into the existing data); ranges: 59-70 or 59..70
 //        node tools/gen-goals.js --level N       worker mode (one level; writes tools/solutions/goals/_level-NN.json)
+//        --keep                                  append mode (docs/challenges/SPEC-CHALLENGES.md 3.2): the level's shipped
+//                                                goal types stay (kept byte-identical while the stored proof still earns
+//                                                it, else re-derived; exit 1 if one can no longer be proven), then new
+//                                                design types are appended up to 4 goals in all
+// Seeds: every tools/solutions/seeds/level-NN-*.json (hand-made designs) joins the candidate pool.
 //        env GEN_BUDGET_MS=240000                per-level optimisation time budget
 'use strict';
 const fs = require('fs');
@@ -46,6 +51,7 @@ function accept(level, design) {
   let r;
   try { r = runHeadless(level, design, { keepSim: true }); } catch (e) { return null; }
   if (r.status !== 'success' || !r.budgetOk || !r.valid || !(r.peakStress <= PEAK_MAX)) return null;
+  if (r.peakRoot != null && !(r.peakRoot <= PEAK_MAX)) return null;   // a flexible tree's roots must hold too
   if (buildability(level, design)) return null;
   if (r.brokenBeams === 0) {
     const all = BG.Model.allNodes(level, design);
@@ -123,6 +129,9 @@ function mirrorHalf(level, d, keepLeft) {
   }
   return fromSegments(level, out, piers);
 }
+// materials a material cap / no-material challenge can concern: never a deck (road, rail) material
+function isCapMaterial(m) { const x = BG.Materials[m]; return !!x && !x.isRoad && !x.isRail; }
+function beamLen(level, d, i) { return BG.Model.beamLength(level, d, d.beams[i]); }
 function substitute(level, d, map) {
   const out = clone(d);
   out.beams.forEach(b => { if (map[b.m] && level.materials.includes(map[b.m])) b.m = map[b.m]; });
@@ -179,6 +188,14 @@ function solve(level) {
     return e;
   };
   add('ref', ref); add('best', best);
+  // seeds: hand-made designs by the level agents (they go through accept() like every candidate)
+  const seedDir = path.join(SOL, 'seeds');
+  if (fs.existsSync(seedDir)) {
+    for (const f of fs.readdirSync(seedDir).sort()) {
+      if (!f.startsWith('level-' + nn + '-') || !f.endsWith('.json')) continue;
+      try { add('seed-' + f.slice(('level-' + nn + '-').length, -5), BG.Model.deserialize(fs.readFileSync(path.join(seedDir, f), 'utf8'))); } catch (e) { /* unreadable seed */ }
+    }
+  }
 
   // templates (symmetric by construction on level-symmetric terrain)
   try {
@@ -197,6 +214,30 @@ function solve(level) {
     add(e.label + '-steel', substitute(level, e.design, { wood: 'steel' }));
     add(e.label + '-steel-rr', substitute(level, e.design, { wood: 'steel', road: 'reinforced_road', rope: 'cable' }));
     add(e.label + '-rr', substitute(level, e.design, { road: 'reinforced_road' }));
+    // challenge-driven substitutions (only where both materials are allowed): fewer / no members of a material
+    add(e.label + '-bam2wood', substitute(level, e.design, { bamboo: 'wood' }));
+    add(e.label + '-lia2rope', substitute(level, e.design, { liana: 'rope' }));
+    add(e.label + '-rope2lia', substitute(level, e.design, { rope: 'liana' }));
+    add(e.label + '-bam2steel', substitute(level, e.design, { bamboo: 'steel' }));
+  }
+  // material caps: for every non-deck material the plain solutions use, swap it for each other allowed non-deck
+  // material (all members, and the longest 25 / 50 / 75 % of them) so the pool holds designs that need little of it
+  for (const e of bases.filter(x => x.label === 'ref' || x.label === 'best')) {
+    for (const M of Object.keys(e.m.count)) {
+      if (!isCapMaterial(M)) continue;
+      for (const X of level.materials) {
+        if (X === M || !isCapMaterial(X)) continue;
+        add(e.label + '-' + M + '2' + X, substitute(level, e.design, { [M]: X }));
+        const order = e.design.beams.map((b, i) => i).filter(i => e.design.beams[i].m === M)
+          .sort((a, b) => beamLen(level, e.design, b) - beamLen(level, e.design, a));
+        for (const share of [0.25, 0.5, 0.75]) {
+          const take = new Set(order.slice(0, Math.max(1, Math.round(order.length * share))));
+          const d = clone(e.design);
+          d.beams.forEach((b, i) => { if (take.has(i)) b.m = X; });
+          add(e.label + '-' + M + '2' + X + '-' + share, d);
+        }
+      }
+    }
   }
 
   // symmetric rebuilds
@@ -295,12 +336,76 @@ function achievable(level, pool) {
     const c = pool.filter(x => x.m.piers === 0);
     if (c.length) out.no_piers = { spec: { type: 'no_piers' }, entry: c.sort((a, b) => a.m.cost - b.m.cost)[0] };
   }
+  // ---- design challenges (SPEC-CHALLENGES 3.2): each offered only when a passing pool design meets it ----
+  const refBest = pool.filter(e => e.label === 'ref' || e.label === 'best');
+  const cheapest = arr => arr.sort((a, b) => a.m.cost - b.m.cost)[0];
+  {
+    // no_material: the allowed icon material the plain solutions use most (by length) that some pool design avoids
+    let bestM = null;
+    for (const M of BG.Goals.NO_MATERIAL_ICONS) {
+      if (!level.materials.includes(M) || !isCapMaterial(M)) continue;
+      const ref = Math.max(0, ...refBest.map(e => e.m.length[M] || 0));
+      const c = pool.filter(x => !x.m.count[M]);
+      if (ref > 0 && c.length && (!bestM || ref > bestM.ref)) bestM = { M, ref, entry: cheapest(c) };
+    }
+    if (bestM) out.no_material = { spec: { type: 'no_material', material: bestM.M }, entry: bestM.entry };
+  }
+  {
+    // stock: a real redesign (the smallest pool length <= 60 % of the plain solutions' shorter one), never for the
+    // material no_material took
+    let bestS = null;
+    for (const M of level.materials) {
+      if (!isCapMaterial(M) || (out.no_material && out.no_material.spec.material === M)) continue;
+      if (!refBest.length) continue;
+      const lref = Math.min(...refBest.map(e => e.m.length[M] || 0));
+      if (!(lref > 0)) continue;
+      const lmin = Math.min(...pool.map(x => x.m.length[M] || 0).filter(v => v > 0));
+      if (!isFinite(lmin) || lmin > 0.6 * lref) continue;
+      const maxLen = Math.ceil(lmin * 1.05);
+      const c = pool.filter(x => (x.m.length[M] || 0) <= maxLen);
+      if (c.length && (!bestS || lref > bestS.lref)) bestS = { lref, entry: cheapest(c), spec: { type: 'stock', material: M, maxLen } };
+    }
+    if (bestS) out.stock = { spec: bestS.spec, entry: bestS.entry };
+  }
+  if (refBest.length) {
+    const jmin = Math.min(...pool.map(x => x.m.joints)), jref = Math.min(...refBest.map(e => e.m.joints));
+    if (jmin <= 0.8 * jref) {
+      const max = jmin + Math.max(1, Math.round(0.05 * jmin));
+      out.max_joints = { spec: { type: 'max_joints', max }, entry: cheapest(pool.filter(x => x.m.joints <= max)) };
+    }
+  }
+  if (level.anchors.some(a => a.deco === 'tree') && refBest.some(e => e.m.boltMembers > 0)) {
+    const c = pool.filter(x => x.m.boltMembers === 0);
+    if (c.length) out.trees_only = { spec: { type: 'trees_only' }, entry: cheapest(c) };
+  }
+  if (level.anchors.some(a => a.deco === 'stake') && refBest.length && refBest.every(e => e.m.stakeMembers > 0)) {
+    const c = pool.filter(x => x.m.stakeMembers === 0);
+    if (c.length) out.no_stakes = { spec: { type: 'no_stakes' }, entry: cheapest(c) };
+  }
   return out;
 }
 
-function choose(level, ach) {
+const DESIGN = ['no_material', 'stock', 'trees_only', 'no_stakes', 'max_joints'];   // priority order
+const MAX_GOALS = 4, MAX_DESIGN = 2;
+
+// Appends design types to the chosen ones: at most `room` more, MAX_GOALS in all, MAX_DESIGN design types in all.
+// max_joints is skipped next to a minimalist that is being chosen now (a kept minimalist is fine: append-only sets).
+// `first` lists design types to try before the usual priority order.
+function appendDesign(ach, chosen, room, keptMinimalist, first) {
+  const out = chosen.slice();
+  const order = (first || []).concat(DESIGN.filter(t => !(first || []).includes(t)));
+  for (const t of order) {
+    if (room <= 0 || out.length >= MAX_GOALS || out.filter(x => DESIGN.includes(x)).length >= MAX_DESIGN) break;
+    if (!ach[t] || out.includes(t)) continue;
+    if (t === 'max_joints' && out.includes('minimalist') && !keptMinimalist) continue;
+    out.push(t); room--;
+  }
+  return out;
+}
+
+function choose(level, ach, kOverride) {
   const types = Object.keys(ach);
-  const k = level.id <= 5 ? 2 : 3;
+  const k = kOverride || (level.id <= 5 ? 2 : 3);
   const noise = t => ((level.id * 2654435761 + t.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7)) >>> 0) % 4;
   const score = t => PRIORITY[t] + noise(t) * 0.8;
   const sorted = types.sort((a, b) => score(b) - score(a));
@@ -314,19 +419,52 @@ function choose(level, ach) {
   return chosen;
 }
 
-function workerMain(id) {
+function workerMain(id, keep) {
   const level = BG.Levels.find(l => l.id === id);
   if (!level) throw new Error('no level ' + id);
   const t0 = Date.now();
   const pool = solve(level);
   const ach = achievable(level, pool);
-  const chosen = choose(level, ach);
+  let chosen;
+  const shipped = keep ? (readData()[id] || []) : [];
+  if (keep && shipped.length) {
+    // append mode: shipped types stay, then new design types up to MAX_GOALS. A shipped goal whose stored proof
+    // still passes and still earns it keeps its threshold and proof file byte-identical (levels whose physics did
+    // not change stay exactly as shipped); otherwise its threshold is re-derived from the pool.
+    for (const s of shipped) {
+      const f = path.join(OUTDIR, 'level-' + pad2(id) + '-' + s.type + '.json');
+      const T = BG.Goals.TYPES[s.type];
+      if (!T || !fs.existsSync(f)) continue;
+      const src = fs.readFileSync(f, 'utf8');
+      let design; try { design = BG.Model.deserialize(src); } catch (e) { continue; }
+      const run = accept(level, design);
+      if (run && T.check(BG.Goals.metrics(level, design, run), s).met) ach[s.type] = { spec: s, entry: null, src };
+    }
+    const lost = shipped.map(s => s.type).filter(t => !ach[t]);
+    if (lost.length) {
+      console.error('level ' + id + ': shipped type(s) can no longer be proven: ' + lost.join(', ') + ' (add a seed design in tools/solutions/seeds/)');
+      process.exit(1);
+    }
+    chosen = shipped.map(s => s.type);
+    chosen = appendDesign(ach, chosen, MAX_GOALS - chosen.length, true);
+  } else {
+    // a new level (or no --keep): the old rules pick 3, then up to 1 design type is appended
+    // (design types have no PRIORITY: choose() only ranks the classic ones, so they never take one of its 3 slots)
+    const classic = {};
+    for (const t of Object.keys(ach)) if (!DESIGN.includes(t)) classic[t] = ach[t];
+    // A new jungle level (69, 70) is built around its trees and stakes: it gets 2 classic types and 2 design types,
+    // the tree/stake ones (trees_only, no_stakes) first, so the challenges are about the level's idea.
+    const jungle = /^jungle/.test(level.theme || '') && DESIGN.filter(t => ach[t]).length >= 2;
+    const base = choose(level, classic, jungle ? 2 : undefined);
+    chosen = jungle ? appendDesign(ach, base, MAX_GOALS - base.length, false, ['trees_only', 'no_stakes'])
+      : appendDesign(ach, base, 1, false);
+  }
   fs.mkdirSync(OUTDIR, { recursive: true });
   for (const f of fs.readdirSync(OUTDIR)) if (f.startsWith('level-' + pad2(id) + '-')) fs.unlinkSync(path.join(OUTDIR, f));
   const specs = [];
   for (const t of BG.Goals ? chosen : []) {
     const a = ach[t];
-    fs.writeFileSync(path.join(OUTDIR, 'level-' + pad2(id) + '-' + t + '.json'), BG.Model.serialize(a.entry.design));
+    fs.writeFileSync(path.join(OUTDIR, 'level-' + pad2(id) + '-' + t + '.json'), a.src != null ? a.src : BG.Model.serialize(a.entry.design));
     specs.push(a.spec);
   }
   const meta = { id, goals: specs, pool: pool.map(e => e.label + ':' + e.m.members + 'm/' + e.m.mass + 'kg/' + e.m.costRatio + '/' + e.run.peakStress), achievable: Object.keys(ach), sec: Math.round((Date.now() - t0) / 1000) };
@@ -334,6 +472,16 @@ function workerMain(id) {
   console.log('level ' + id + ': ' + specs.map(s => s.type).join(', ') + '  (achievable: ' + meta.achievable.join(',') + ') ' + meta.sec + 's');
 }
 
+// --only accepts ids and ranges: "3", "1,2,3", "59-70", "59..70", "1..10,101"
+function parseOnly(s) {
+  const out = [];
+  for (const part of String(s).split(',')) {
+    const m = /^\s*(\d+)\s*(?:\.\.|-)\s*(\d+)\s*$/.exec(part);
+    if (m) { const a = +m[1], b = +m[2]; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) out.push(i); }
+    else if (part.trim()) out.push(Number(part));
+  }
+  return out;
+}
 function writeData(all) {
   const ids = Object.keys(all).map(Number).sort((a, b) => a - b);
   const lines = ids.map(id => '  ' + id + ': ' + JSON.stringify(all[id]));
@@ -352,9 +500,10 @@ function readData() {
 function main() {
   const args = process.argv.slice(2);
   const li = args.indexOf('--level');
-  if (li >= 0) return workerMain(+args[li + 1]);
+  const keep = args.includes('--keep');
+  if (li >= 0) return workerMain(+args[li + 1], keep);
   const oi = args.indexOf('--only');
-  const only = oi >= 0 ? args[oi + 1].split(',').map(Number) : null;
+  const only = oi >= 0 ? parseOnly(args[oi + 1]) : null;
   const ids = BG.Levels.map(l => l.id).filter(id => !only || only.includes(id));
   const conc = Math.max(1, Math.min(ids.length, (require('os').cpus().length || 4) - 2, 12));
   const queue = ids.slice().sort((a, b) => b - a);   // big levels first
@@ -363,7 +512,9 @@ function main() {
     if (!queue.length) { if (!running) finish(); return; }
     const id = queue.shift();
     running++;
-    const p = spawn(process.execPath, [__filename, '--level', String(id)], { stdio: ['ignore', 'inherit', 'inherit'] });
+    const stale = path.join(OUTDIR, '_level-' + pad2(id) + '.json');
+    if (fs.existsSync(stale)) fs.unlinkSync(stale);
+    const p = spawn(process.execPath, [__filename, '--level', String(id)].concat(keep ? ['--keep'] : []), { stdio: ['ignore', 'inherit', 'inherit'] });
     p.on('exit', code => { running--; if (code) { failed++; console.error('level ' + id + ' worker failed (' + code + ')'); } next(); });
   };
   const finish = () => {

@@ -2,7 +2,7 @@
   "id": 68,
   "name": "Source of the Nile",
   "theme": "jungle_temple",
-  "hint": "The finale: a wide river, a canoe channel, temple ruins and every kind of traveller in the jungle. An expedition has been waiting on the far bank for weeks - get everyone across. Someone over there will be very glad to see you.",
+  "hint": "The source of the Nile: a wide river, a canoe channel, temple ruins and every kind of traveller in the jungle. An expedition has been waiting on the far bank for weeks - get everyone across. Someone over there will be very glad to see you.",
   "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 56, "rightY": 0, "floorY": -20, "waterY": -8 },
   "anchors": [ { "x": 0, "y": 0 }, { "x": 56, "y": 0 }, { "x": 0, "y": -5 }, { "x": 56, "y": -5 }, { "x": -0.5, "y": 12, "deco": "tree" }, { "x": 56.5, "y": 12, "deco": "tree" }, { "x": 12, "y": -2, "deco": "ruin" }, { "x": 44, "y": -2, "deco": "ruin" } ],
   "pierZones": [],

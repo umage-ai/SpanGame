@@ -2,16 +2,18 @@
   "id": 61,
   "name": "Canopy Walk",
   "theme": "jungle",
-  "hint": "Three giant trees hold up the canopy - tie onto them. Hang the walkway from the trees: Liana is cheap, and a full fan of it carries even the hand carts; Rope is the safe choice.",
+  "hint": "Three giant trees hold up the canopy - tie onto them. The two on the banks lean when you pull on them, and the walkway sags with them; pull too hard and the roots give way. A guy rope back to the stake behind a tree holds it upright. Liana is cheap, Rope is the safe choice.",
   "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 30, "rightY": 0, "floorY": -18, "waterY": -12 },
   "anchors": [
     { "x": 0, "y": 0 },
     { "x": 30, "y": 0 },
     { "x": 0, "y": -4 },
     { "x": 30, "y": -4 },
-    { "x": -0.5, "y": 10, "deco": "tree" },
-    { "x": 30.5, "y": 10, "deco": "tree" },
-    { "x": 15, "y": 14, "deco": "tree" }
+    { "x": -0.5, "y": 10, "deco": "tree", "tree": {} },
+    { "x": 30.5, "y": 10, "deco": "tree", "tree": {} },
+    { "x": 15, "y": 14, "deco": "tree" },
+    { "x": -5, "y": 0, "deco": "stake" },
+    { "x": 35, "y": 0, "deco": "stake" }
   ],
   "pierZones": [],
   "maxPiers": 0,

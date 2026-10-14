@@ -24,6 +24,7 @@
     'results.stat.peakStress': 'Maks. belastning',
     'results.stat.time': 'Tid',
     'results.stat.broken': 'Brudt',
+    'results.stat.roots': 'Rodbelastning',
     'results.label.broke': 'BRUDT',
 
     // ---- overskrifter og forklaringer (BG.Game resultText)
@@ -37,6 +38,7 @@
     'results.title.offEdge': 'Ud over kanten!',
     'results.title.jumped': 'Ingen hop, tak!',
     'results.title.stalled': 'Trafikken sidder fast',
+    'results.title.uprooted': 'Rykket op med rode!',
     'results.title.timeout': 'Tiden løb ud',
     'results.title.failed': 'Broen holdt ikke',
     'results.pass.oneVehicle': 'Køretøjet kom sikkert over.',
@@ -65,6 +67,8 @@
     'results.fail.gaps': 'Sørg for, at vejen går hele vejen over, uden huller eller stejle trin.',
     'results.fail.jumped': 'Et køretøj fløj over i stedet for at køre. Vejen skal gå ubrudt fra bred til bred og bære trafikken hele vejen.',
     'results.fail.stalled': 'Alle køretøjer gik i stå på broen. Er kørebanen for stejl, for ujævn, eller hænger den ned i en lavning, de ikke kan komme op af?',
+    'results.fail.uprooted': 'Et træ blev trukket omkuld: broen trak hårdere i det, end rødderne kunne holde. Fordel trækket på flere ankerpunkter, eller afbalancér det med bjælker, der trækker den anden vej.',
+    'results.fail.uprootedStake': 'Et træ blev trukket omkuld: broen trak hårdere i det, end rødderne kunne holde. Bardunér det tilbage med et reb til jordpløkken bag det, eller hæng mindre i det.',
     'results.fail.timeout': 'Kun {n} af {total} køretøjer kom over på {time}. Er kørebanen for stejl, eller bøjer den så meget, at trafikken går i stå?',
     'results.fail.generic': 'Ikke alle køretøjer kom over. Forstærk de overbelastede bjælker, og prøv igen.',
     'results.why.topple': 'En pylon på land væltede først: dens fundament kunne ikke holde til trækket fra skråstagene. Bardunér den bagud med bagstag til et ankerpunkt inde på land.',

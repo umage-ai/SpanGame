@@ -19,7 +19,7 @@
     'hud.title.endlessBest': 'Best run: {cleared} cleared',
     'hud.title.endlessNew': 'Ever-harder crossings',
     'hud.title.history': 'History & stats',
-    'hud.title.badgesTip': 'Challenge badges earned',
+    'hud.title.badgesTip': 'Challenge stars earned',
 
     // ---- level select
     'hud.levels.back': 'Back (Esc)',
@@ -235,6 +235,7 @@
     'hud.sim.fastest': 'Fastest',
     'hud.sim.seconds': 's',
     'hud.sim.across': 'across',
+    'hud.sim.roots': 'Roots {pct}',
     'hud.sim.follow': 'Follow',
     'hud.sim.followTip': 'Camera follows the traffic (F)',
     'hud.sim.track': 'Track',

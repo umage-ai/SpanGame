@@ -64,6 +64,95 @@ const G = BG.Goals;
   ok('goal texts in Danish', da[0].name === 'Fedtsyl' && da[0].desc === 'Gennemfør for højst 70\u00a0% af budgettet' && da[1].name === 'Pillefri' && da[1].text === 'ingen piller' && da[2].text === 'kør en test' && G.TYPES.penny.name === 'Penny Pincher', da);
 }
 
+// ---------------------------------------------------------------- unit tests (design challenges, SPEC-CHALLENGES 3.3)
+{
+  // synthetic level: road ends a0/a1, a cliff bolt a2, a flexible tree a3, a ruin a4, a stake a5
+  const base = L(1);
+  const lv = Object.assign({}, base, {
+    id: 9002, budget: 1e9,
+    materials: ['road', 'wood', 'liana', 'rope'],
+    anchors: base.anchors.slice(0, 2).concat([
+      { x: -2, y: 4 }, { x: 0, y: 8, deco: 'tree', tree: {} }, { x: 3, y: 0, deco: 'ruin' }, { x: -5, y: 0, deco: 'stake' },
+    ]),
+  });
+  const ids = { cliff: 'a2', tree: 'a3', ruin: 'a4', stake: 'a5' };
+  const des = (nodes, beams) => ({ nodes, beams, piers: [] });
+  const pass = { status: 'success', peakStress: 0.3 };
+  const ev = (specs, d, sim) => (G.register(9002, specs), G.evaluate(lv, d, sim === undefined ? pass : sim));
+  const rope = (a, b) => ({ a, b, m: 'rope' });
+  const A = lv.anchors;
+  const L1 = Math.round(Math.hypot(A[3].x - A[5].x, A[3].y - A[5].y) * 100) / 100;
+  const d1 = des([], [rope(ids.tree, ids.stake)]);
+
+  // stock: met / unmet / live / exact boundary
+  ok('metrics: length per material', G.metrics(lv, d1, null).length.rope === L1, G.metrics(lv, d1, null).length);
+  let r = ev([{ type: 'stock', material: 'rope', maxLen: Math.ceil(L1) }], d1);
+  ok('stock: met when within the cap', r.goals[0].met === true && r.goals[0].candidate, r.goals[0]);
+  r = ev([{ type: 'stock', material: 'rope', maxLen: Math.floor(L1) }], d1);
+  ok('stock: unmet over the cap', r.goals[0].met === false && r.goals[0].candidate === false && r.goals[0].frac < 1, r.goals[0]);
+  r = ev([{ type: 'stock', material: 'rope', maxLen: L1 }], d1);
+  ok('stock: the exact boundary counts as met', r.goals[0].met === true);
+  r = ev([{ type: 'stock', material: 'rope', maxLen: 99 }], d1, null);
+  ok('stock: live - on track without a run, not earned', G.TYPES.stock.live === true && r.goals[0].candidate === true && r.goals[0].met === false);
+  r = ev([{ type: 'stock', material: 'liana', maxLen: 5 }], d1);
+  ok('stock: a material not used is within any cap', r.goals[0].met === true);
+  r = ev([{ type: 'stock', material: 'rope', maxLen: 12 }], d1);
+  ok('stock: texts', r.goals[0].name === 'Short on Rope' && r.goals[0].desc === 'Pass using at most 12 m of Rope' && r.goals[0].icon === 'stock' && /\/ 12 m of Rope$/.test(r.goals[0].text), r.goals[0]);
+
+  // no_material: title and icon resolve per material
+  r = ev([{ type: 'no_material', material: 'liana' }], d1);
+  ok('no_material: title and icon', r.goals[0].name === 'No Liana' && r.goals[0].icon === 'no_liana' && r.goals[0].desc === 'Pass without using any Liana' && r.goals[0].met, r.goals[0]);
+  r = ev([{ type: 'no_material', material: 'rope' }], d1);
+  ok('no_material: unmet when used', !r.goals[0].met && !r.goals[0].candidate && r.goals[0].icon === 'no_rope' && r.goals[0].text === '1 Rope member', r.goals[0]);
+
+  // max_joints: user joints only (anchors excluded)
+  const d2 = des([{ id: 'n1', x: 1, y: 1 }, { id: 'n2', x: 2, y: 1 }, { id: 'n3', x: 3, y: 1 }],
+    [rope('a0', 'n1'), rope('n1', 'n2'), rope('n2', 'a1'), rope('n1', 'n2'), rope('a0', 'a1')]);
+  ok('metrics: joints count the used user nodes only', G.metrics(lv, d2, null).joints === 2, G.metrics(lv, d2, null).joints);
+  ok('max_joints: met at the count, unmet below', ev([{ type: 'max_joints', max: 2 }], d2).goals[0].met && !ev([{ type: 'max_joints', max: 1 }], d2).goals[0].met);
+  ok('max_joints: text', ev([{ type: 'max_joints', max: 4 }], d2).goals[0].text === '2 / 4 joints');
+
+  // trees_only: road ends, trees, stakes and ruins are allowed; a cliff bolt breaks it
+  const ok1 = des([{ id: 'n1', x: 1, y: 2 }], [rope('a0', 'n1'), rope('n1', ids.tree), rope('n1', ids.ruin), rope('n1', ids.stake), rope('n1', 'a1')]);
+  r = ev([{ type: 'trees_only' }], ok1);
+  ok('trees_only: road ends, trees, stakes and ruins are allowed', r.goals[0].met === true && G.metrics(lv, ok1, null).boltMembers === 0, G.metrics(lv, ok1, null));
+  const bad1 = des([{ id: 'n1', x: 1, y: 2 }], [rope('a0', 'n1'), rope('n1', ids.cliff)]);
+  r = ev([{ type: 'trees_only' }], bad1);
+  ok('trees_only: a cliff bolt breaks it', r.goals[0].met === false && r.goals[0].text === '1 member on a cliff bolt' && G.metrics(lv, bad1, null).boltMembers === 1, r.goals[0]);
+  ok('metrics: trees and stakes counted', G.metrics(lv, ok1, null).trees === 1 && G.metrics(lv, ok1, null).stakes === 1);
+
+  // no_stakes
+  r = ev([{ type: 'no_stakes' }], ok1);
+  ok('no_stakes: unmet with a stake member', r.goals[0].met === false && r.goals[0].text === '1 member on a stake', r.goals[0]);
+  r = ev([{ type: 'no_stakes' }], bad1);
+  ok('no_stakes: met without stakes', r.goals[0].met === true && r.goals[0].text === 'no stakes used', r.goals[0]);
+
+  // cool_head takes the root load into account
+  r = ev([{ type: 'cool_head', max: 0.5 }], bad1, { status: 'success', peakStress: 0.4, peakRoot: 0.7 });
+  ok('cool_head: peakRoot 0.7 + peakStress 0.4 is not met at 0.5', r.goals[0].met === false && r.metrics.peak === 0.7, r.metrics.peak);
+  r = ev([{ type: 'cool_head', max: 0.5 }], bad1, { status: 'success', peakStress: 0.4 });
+  ok('cool_head: without peakRoot the stress counts alone', r.goals[0].met === true);
+
+  // Danish: the material is lowercase inside the sentence
+  BG.i18n.setLanguage('da', { persist: false });
+  const da = ev([{ type: 'no_material', material: 'liana' }, { type: 'stock', material: 'rope', maxLen: 12 }], d1).goals;
+  BG.i18n.setLanguage('en', { persist: false });
+  ok('Danish texts use the lowercase material', da[0].name === 'Uden lian' && da[0].desc === 'Gennemfør uden at bruge lian' && da[1].name === 'Sparsom med reb', da.map(g => g.name + ' | ' + g.desc));
+
+  // every icon exists as a file with the 64x64 viewBox, including a no_<m> per NO_MATERIAL_ICONS
+  const iconDir = path.join(__dirname, '..', 'assets', 'icons', 'badges');
+  const icons = new Set();
+  for (const id of Object.keys(G.TYPES)) {
+    const T = G.TYPES[id];
+    if (typeof T.icon === 'function') G.NO_MATERIAL_ICONS.forEach(m => icons.add(T.icon({ material: m }))); else icons.add(T.icon);
+  }
+  ok('NO_MATERIAL_ICONS: four materials, none steel or deck', G.NO_MATERIAL_ICONS.length === 4 && G.NO_MATERIAL_ICONS.every(m => m !== 'steel' && !BG.Materials[m].isRoad && !BG.Materials[m].isRail));
+  for (const ic of icons) {
+    const f = path.join(iconDir, ic + '.svg');
+    ok('icon file exists with a 64x64 viewBox: ' + ic, fs.existsSync(f) && /viewBox="0 0 64 64"/.test(fs.readFileSync(f, 'utf8')));
+  }
+}
+
 // ---------------------------------------------------------------- data shape
 const data = BG.GoalsData || {};
 const ids = Object.keys(data).map(Number).sort((a, b) => a - b);
@@ -75,7 +164,7 @@ let total = 0;
 const typeCount = {};
 for (const id of ids) {
   const specs = data[id];
-  ok('level ' + id + ': 2-3 goals', specs.length >= 2 && specs.length <= 3, specs.length);
+  ok('level ' + id + ': 2-4 goals', specs.length >= 2 && specs.length <= 4, specs.length);
   ok('level ' + id + ': unique types', new Set(specs.map(s => s.type)).size === specs.length);
   total += specs.length;
   specs.forEach(s => { typeCount[s.type] = (typeCount[s.type] || 0) + 1; ok('level ' + id + ': known type ' + s.type, !!G.TYPES[s.type]); });

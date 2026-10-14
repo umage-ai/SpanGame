@@ -105,7 +105,7 @@
     // `gates`: the chapter finales (last level of each chapter / Iron Road line). A gate can't be skipped:
     // nothing after it unlocks until it is complete. The campaign's `last` and `bonusLast` are gates too.
     // Famous Bridges run in date order with no chapters, so only their finale is a gate.
-    // `bonus`: hidden bonus chapters that branch off the campaign's main line (Anchorages, 54-58, opens after level 40; Jungle, 59-68, opens after level 30):
+    // `bonus`: hidden bonus chapters that branch off the campaign's main line (Anchorages, 54-58, opens after level 40; Jungle, 59-70, opens after level 30):
     // their levels unlock in their own list (the first once `unlockAfter` is complete, then the usual either-of-two rule),
     // they are never gates and never block the main line, Next stays inside the chapter, and finishing `last` shows the
     // chapter's own finale (finaleOf -> the chapter id). The Forces of Nature (51-53) stay on the main line after 50.
@@ -114,7 +114,7 @@
     CAMPAIGNS: {
       road: lazyName({ id: 'road', first: 1, last: 50, bonusLast: 53, unlockAfter: null, gates: [5, 10, 20, 30, 40, 50],
         bonus: [lazyName({ id: 'anchorages', first: 54, last: 58, unlockAfter: 40 }, 'hud.chapter.anchorages.name'),
-          lazyName({ id: 'jungle', first: 59, last: 68, unlockAfter: 30 }, 'hud.chapter.jungle.name')] }, 'hud.camp.road.name'),
+          lazyName({ id: 'jungle', first: 59, last: 70, unlockAfter: 30 }, 'hud.chapter.jungle.name')] }, 'hud.camp.road.name'),
       rail: lazyName({ id: 'rail', first: 101, last: 120, unlockAfter: 10, gates: [105, 110, 115, 120] }, 'hud.camp.rail.name'),
       famous: lazyName({ id: 'famous', first: 201, last: 212, unlockAfter: 15, gates: [] }, 'famous.tab.name'),
     },
