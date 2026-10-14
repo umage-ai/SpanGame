@@ -66,17 +66,17 @@
     walker: [100, 175], walker_b: [100, 175], monkey: [80, 55], monkey_b: [80, 55],
     handcart: [260, 140], handcart_b: [260, 140], oxcart: [520, 200], oxcart_b: [520, 200], jeep: [360, 190],
     livingstone: [100, 180], livingstone_b: [100, 180], stanley: [90, 185], stanley_b: [90, 185],
-    wheel_wood: [100, 100], canoe: [520, 110], parrot: [40, 70], snake: [180, 60], tiger: [220, 90],
+    handcart_cart: [260, 140], anchor_wood: [128, 128], anchor_stone: [128, 128], wheel_wood: [100, 100], canoe: [520, 110], parrot: [40, 70], snake: [180, 60], tiger: [220, 90],
     elephant: [400, 300], croc: [300, 30], fern: [140, 90], ruin_head: [300, 360], ruin_pillar: [200, 400], ruin_cap: [240, 80]
   };
   // vehicle type -> [sprite, wheel sprite or null, stride (m) or 0]; the sprite width is def.length * 100
   const TYPES = {
-    walker: { body: 'walker', frames: true, stride: 0.35, wheel: null },
-    monkey: { body: 'monkey', frames: true, stride: 0.25, wheel: null },
-    handcart: { body: 'handcart', frames: true, stride: 0.35, wheel: 'wheel_wood', wheels: [0, 1] },
+    walker: { body: 'walker', frames: true, stride: 0.35, wheel: null, fig: 'human' },
+    monkey: { body: 'monkey', frames: true, stride: 0.25, wheel: null, fig: 'monkey' },
+    handcart: { body: 'handcart', frames: true, stride: 0.35, wheel: 'wheel_wood', wheels: [0, 1], pusher: 'handcart_cart' },
     oxcart: { body: 'oxcart', frames: true, stride: 0.45, wheel: 'wheel_wood', wheels: [0] },
     jeep: { body: 'jeep', frames: false, stride: 0, wheel: 'wheel', wheels: [0, 1] },
-    livingstone: { body: 'livingstone', frames: true, stride: 0.35, wheel: null }
+    livingstone: { body: 'livingstone', frames: true, stride: 0.35, wheel: null, fig: 'human' }
   };
   (function () {
     const meta = Sprites.meta, names = Sprites.names;
@@ -377,6 +377,39 @@
   };
 
   // ------------------------------------------------------------------ traffic
+  // gait state per vehicle (js/features/jungle-figures.js): the stride phase advances with the distance
+  // actually covered, so planted feet don't slide, and `w` eases between standing (0) and a full stride (1)
+  const gaitS = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+  function gait(v, def, tp, dist, dt, moving, k) {
+    const Fig = BG.JungleFigures;
+    let g = gaitS && gaitS.get(v);
+    if (!g) { g = { d: dist, p: hash2(v.index | 0, 3, 17), w: 0, fall: false }; if (gaitS) gaitS.set(v, g); }
+    let dd = dist - g.d; g.d = dist;
+    if (!(Math.abs(dd) < 1)) dd = 0; // a reset or a teleport
+    const want = moving ? clamp(Math.abs(v.vx || 0) / (((def && def.speed) || 2) * 0.55), 0, 1) : 0;
+    if (dt > 0) g.w += (want - g.w) * (1 - Math.exp(-dt * 6));
+    const mk = tp.fig === 'monkey', s = tp.pusher ? 0.86 * k : k;
+    const C = (mk ? Fig.MONKEY_CYCLE * (0.3 + 0.7 * g.w) : Fig.HUMAN_CYCLE * (0.25 + 0.75 * g.w)) * s;
+    g.p = (g.p + Math.abs(dd) / C) % 1;
+    g.fall = v.state === 'fallen';
+    return g;
+  }
+  const SHIRTS = ['#c8743a', '#3a7ab8', '#b8443a', '#5a8a3a', '#d8a838', '#8a4a9a', '#2a8a8a'];
+  const TROUSERS = ['#e8dcc0', '#5a4a3a', '#c8b890', '#3a4a5a', '#f0ece0'];
+  const SKIN = ['#e0a672', '#b87a4a', '#8a5a36', '#c68a58', '#6e4428'];
+  const LOADS = ['bundle', 'basket', 'pot'];
+  function look(v, s, g, t) { // a porter's colours and load, fixed per vehicle; Dr Livingstone in khaki
+    const o = { p: g.p, w: g.w, s, t, fall: g.fall };
+    if (v.type === 'livingstone') {
+      return Object.assign(o, { look: { shirt: '#d6c08a', trousers: '#c8b080', skin: '#f0c8a0', shoe: '#3a2a18' }, hat: 'pith', beard: '#e4e4dc', stick: true });
+    }
+    const pick = function (a, k) { return a[Math.floor(hash2(v.index | 0, k, 29) * a.length) % a.length]; };
+    const porter = v.type === 'walker';
+    return Object.assign(o, {
+      look: { shirt: pick(SHIRTS, 1), trousers: pick(TROUSERS, 2), skin: pick(SKIN, 3) },
+      load: porter ? pick(LOADS, 4) : null, arms: porter ? 'carry' : null
+    });
+  }
   const exhaustT = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
   const origVehicle = RP._drawVehicle;
   RP._drawVehicle = function (ctx, v, dt, state) {
@@ -390,6 +423,26 @@
     const r0 = (ws[0] && ws[0].r) || (def && def.wheelRadius) || 0.3;
     const dist = ws[0] && typeof ws[0].rot === 'number' ? ws[0].rot * r0 : (ws[0] ? ws[0].x : 0);
     const moving = v.state === 'driving' || v.state === 'running';
+    const Fig = BG.JungleFigures;
+    if ((tp.fig || tp.pusher) && Fig) { // procedurally animated walkers, monkeys and the cart pusher
+      const g = gait(v, def, tp, dist, dt, moving, P.k);
+      const t = this.time + (v.index | 0) * 0.9;
+      ctx.save();
+      ctx.translate(P.ox, P.oy); ctx.rotate(P.ang);
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      const mk = tp.fig === 'monkey', shW = mk ? 0.3 : tp.fig ? 0.3 : 1.2;
+      ctx.beginPath(); ctx.ellipse(mk ? 0.42 * P.k : P.Lm / 2, 0.02, shW * P.k, Math.max(0.05, 0.04 * P.k), 0, 0, TAU); ctx.fill();
+      if (mk) { ctx.translate(0.42 * P.k, 0); Fig.monkey(ctx, { p: g.p, w: g.w, s: P.k, t, fall: g.fall }); }
+      else if (tp.fig) { ctx.translate(P.Lm / 2, 0); Fig.human(ctx, look(v, P.k, g, t)); }
+      else {
+        ctx.save(); ctx.translate(0.3 * P.k, 0);
+        Fig.human(ctx, Object.assign(look(v, 0.86 * P.k, g, t), { load: null, arms: g.fall ? null : 'push', lean: g.fall ? undefined : 0.3 + 0.08 * g.w, hand: { x: 0.42 * P.k, y: 0.77 * P.k } }));
+        ctx.restore();
+        const img = Sprites.raster('jungle/' + tp.pusher, P.Lm * z * d);
+        if (img) { ctx.save(); ctx.scale(1, -1); ctx.drawImage(img, 0, -P.Hm, P.Lm, P.Hm); ctx.restore(); }
+      }
+      ctx.restore();
+    } else {
     const frame = tp.frames && tp.stride ? (Math.floor(Math.abs(dist) / tp.stride) % 2) : 0;
     const bob = tp.frames && moving && (def && def.foot) ? Math.sin(dist * TAU / tp.stride) * 0.02 : 0;
     ctx.save();
@@ -402,6 +455,7 @@
     if (img) { ctx.scale(1, -1); ctx.drawImage(img, 0, -P.Hm, P.Lm, P.Hm); }
     else { ctx.fillStyle = (def && def.color) || '#9a6a3a'; ctx.fillRect(0, 0.1, P.Lm, Math.max(0.3, P.Hm * 0.7)); }
     ctx.restore();
+    }
     if (tp.wheel) {
       const wname = tp.wheel === 'wheel' ? 'wheel' : 'jungle/' + tp.wheel;
       for (const i of tp.wheels) {
@@ -426,6 +480,99 @@
       }
       if (exhaustT) exhaustT.set(v, t);
     }
+  };
+
+  // ------------------------------------------------------------------ bank tops: a jungle trail, not a road
+  // The trail surface is at the same height as the road it replaces (vehicles walk on y), so only the look changes:
+  // packed red earth with ruts and pebbles, a grassy lip, and log cribbing (jungle) or mossy ashlar (temple)
+  // where a concrete abutment would be.
+  const origBankTop = RP._drawBankTop;
+  RP._drawBankTop = function (g, side, x0, x1, y, G, z) {
+    if (!isJungle(this.level)) return origBankTop.apply(this, arguments);
+    const px = 1 / z, ROAD = 0.42, VT = 0.7;
+    const edge = side < 0 ? x1 : x0;
+    const v = this._visibleWorld(40);
+    const vx0 = Math.max(x0, v.x0 - 2), vx1 = Math.min(x1, v.x1 + 2);
+    if (vx1 <= vx0) return;
+    const T = this.terrain, temple = this.level.theme === 'jungle_temple';
+    const ab0 = side < 0 ? edge - 1.7 : edge, ab1 = side < 0 ? edge : edge + 1.7, abBot = y - T.ABUT;
+    const st = Math.max(0.3, 6 / z);
+    // verge under the trail
+    g.beginPath(); g.moveTo(vx0, y - ROAD); g.lineTo(vx1, y - ROAD);
+    for (let x = vx1; x >= vx0 - st; x -= st) g.lineTo(x, y - ROAD - VT - (U.fbm(x * 0.6, 4, 2) - 0.5) * 0.35);
+    g.closePath();
+    const vg = g.createLinearGradient(0, y - ROAD, 0, y - ROAD - VT);
+    vg.addColorStop(0, '#5a3c22'); vg.addColorStop(1, G.soil[0]);
+    g.fillStyle = vg; g.fill();
+    // the abutment: log cribbing or temple stones
+    if (temple) {
+      const rows = 5, hRow = (T.ABUT - ROAD) / rows;
+      for (let i = 0; i < rows; i++) {
+        const yy = abBot + i * hRow, off = i % 2 ? 0.45 : 0;
+        for (let x = ab0 - off; x < ab1; x += 0.9) {
+          const a = Math.max(x, ab0), b = Math.min(x + 0.9, ab1); if (b - a < 0.05) continue;
+          const r = U.hash(Math.round(x * 13) + i * 7 + Math.round(edge));
+          g.fillStyle = mix('#a39a80', '#7d7560', r * 0.6);
+          g.fillRect(a + 0.02, yy + 0.02, b - a - 0.04, hRow - 0.04);
+          g.fillStyle = 'rgba(255,250,230,0.18)'; g.fillRect(a + 0.02, yy + hRow - 0.08, b - a - 0.04, 0.06);
+          if (r < 0.35) { g.fillStyle = 'rgba(70,120,50,0.55)'; g.beginPath(); g.ellipse((a + b) / 2, yy + hRow - 0.04, (b - a) * 0.35, 0.07, 0, 0, TAU); g.fill(); }
+        }
+      }
+      g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(side < 0 ? ab1 - 0.1 : ab0, abBot, 0.1, T.ABUT - ROAD);
+    } else {
+      const n = 5, hRow = (T.ABUT - ROAD) / n;
+      for (let i = 0; i < n; i++) { // logs laid along the trail, ends showing at the gap
+        const yy = abBot + i * hRow + hRow / 2, rr = hRow * 0.52;
+        const lg = g.createLinearGradient(0, yy - rr, 0, yy + rr);
+        lg.addColorStop(0, '#4a2e18'); lg.addColorStop(0.5, '#7a5432'); lg.addColorStop(1, '#5e3e22');
+        g.fillStyle = lg; g.fillRect(ab0, yy - rr, ab1 - ab0, 2 * rr);
+        g.strokeStyle = 'rgba(40,24,10,0.45)'; g.lineWidth = 1.2 * px;
+        g.beginPath(); g.moveTo(ab0, yy + rr * 0.3); g.lineTo(ab1, yy + rr * 0.3); g.moveTo(ab0, yy - rr * 0.4); g.lineTo(ab1, yy - rr * 0.4); g.stroke();
+        const ex = edge, er = rr * 0.98; // the cut end, rings and all
+        g.fillStyle = '#c89a62'; g.beginPath(); g.ellipse(ex, yy, er * 0.42, er, 0, 0, TAU); g.fill();
+        g.strokeStyle = '#7a5432'; g.lineWidth = 1 * px;
+        g.beginPath(); g.ellipse(ex, yy, er * 0.42, er, 0, 0, TAU); g.stroke();
+        g.beginPath(); g.ellipse(ex, yy, er * 0.22, er * 0.52, 0, 0, TAU); g.stroke();
+      }
+      // a vine over the cribbing
+      g.strokeStyle = '#3f7a2c'; g.lineWidth = 0.06;
+      g.beginPath(); g.moveTo(ab0 + 0.3, y - ROAD); g.quadraticCurveTo((ab0 + ab1) / 2, abBot + 0.9, ab1 - 0.2, abBot + 0.4); g.stroke();
+      for (let k = 0; k < 4; k++) leaf(g, ab0 + 0.4 + k * 0.32, y - ROAD - 0.35 - k * 0.35, 0.28, k % 2 ? 0.6 : 2.5, k % 2 ? '#5f9a36' : '#3f7a2c');
+    }
+    // the trail: packed earth
+    const rg = g.createLinearGradient(0, y, 0, y - ROAD);
+    rg.addColorStop(0, '#9a6a3e'); rg.addColorStop(0.3, '#7e5432'); rg.addColorStop(1, '#5a3a20');
+    g.fillStyle = rg; g.fillRect(vx0, y - ROAD, vx1 - vx0, ROAD);
+    g.fillStyle = '#b8875a'; g.fillRect(vx0, y - 0.06, vx1 - vx0, 0.06); // trodden top
+    if (z > 4) { // ruts, pebbles and roots
+      const sp = 0.55;
+      for (let x = Math.floor(vx0 / sp) * sp; x < vx1; x += sp) {
+        const r = U.hash(Math.round(x * 31) + 3), r2 = U.hash(Math.round(x * 17) + 9);
+        if (r < 0.45) { g.fillStyle = r2 < 0.5 ? 'rgba(60,36,18,0.45)' : 'rgba(230,200,150,0.35)'; g.beginPath(); g.ellipse(x + r2 * 0.4, y - 0.12 - r * 0.5, 0.05 + r2 * 0.06, 0.03 + r * 0.03, 0, 0, TAU); g.fill(); }
+        if (r > 0.9) { g.strokeStyle = 'rgba(70,44,24,0.8)'; g.lineWidth = 1.6 * px; g.beginPath(); g.moveTo(x, y - 0.05); g.quadraticCurveTo(x + 0.3, y - 0.28, x + 0.7, y - 0.36); g.stroke(); }
+      }
+    }
+    // grass lip and tufts along the trail edge (behind and in front)
+    if (z > 3) {
+      g.fillStyle = '#4f9a3a';
+      const sp = Math.max(0.12, 2.2 / z);
+      g.beginPath();
+      for (let x = vx0; x < vx1; x += sp) {
+        if (x > ab0 - 0.05 && x < ab1 + 0.05) continue;
+        const r = U.hash(Math.round(x * 40));
+        if (r < 0.35) continue;
+        const hh = 0.06 + r * 0.16;
+        g.moveTo(x - 0.05, y - 0.02); g.lineTo(x + (r - 0.5) * 0.14, y + hh); g.lineTo(x + 0.05, y - 0.02);
+      }
+      g.fill();
+      for (let x = Math.floor(vx0 / 2.3) * 2.3; x < vx1; x += 2.3) { // a fern or a fallen leaf now and then
+        const r = U.hash(Math.round(x * 7) + 21);
+        if (r > 0.3 || (x > ab0 - 0.5 && x < ab1 + 0.5)) continue;
+        for (let k = 0; k < 4; k++) leaf(g, x, y - 0.02, 0.35 + r, -Math.PI / 2 + (k - 1.5) * 0.45 + Math.PI, k % 2 ? '#3f7a2c' : '#5f9a36');
+      }
+    }
+    g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 1 * px;
+    g.beginPath(); g.moveTo(vx0, y - ROAD); g.lineTo(vx1, y - ROAD); g.stroke();
   };
 
   // ------------------------------------------------------------------ stone pillars (ruin piers / ruin anchors)
@@ -477,6 +624,14 @@
   // ------------------------------------------------------------------ anchors: lashing knots on trees
   const origAnchors = RP._drawAnchors;
   RP._drawAnchors = function (ctx, L) {
+    if (isJungle(L)) { // lashed posts (or temple stone) for the bolts, not concrete with hazard stripes
+      const raster = Sprites.raster, alt = 'jungle/anchor_' + (L.theme === 'jungle_temple' ? 'stone' : 'wood');
+      Sprites.raster = function (n) { return raster.apply(Sprites, [n === 'anchor' ? alt : n].concat([].slice.call(arguments, 1))) || (n === 'anchor' ? raster.apply(Sprites, arguments) : null); };
+      try { return jungleAnchors.apply(this, arguments); } finally { Sprites.raster = raster; }
+    }
+    return jungleAnchors.apply(this, arguments);
+  };
+  const jungleAnchors = function (ctx, L) {
     if (L && L.anchors && L.anchors.some(a => a.deco === 'tree')) {
       JungleFx.hits++;
       safe(() => {
@@ -657,22 +812,41 @@
       }
     }
   }
+  function profileX(pts, y) { // x of a cliff profile at height y (renderer.js has the same helper)
+    for (let i = 1; i < pts.length; i++) {
+      const p = pts[i - 1], q = pts[i];
+      if ((y <= p.y && y >= q.y) || (y >= p.y && y <= q.y)) return p.x + (q.x - p.x) * (p.y === q.y ? 0 : (y - p.y) / (q.y - p.y));
+    }
+    return pts[pts.length - 1].x;
+  }
   function drawCanoes(r, ctx, L, T, tm) {
     const n = canoeCount(L); if (!n || !wetLevel(L)) return;
     JungleFx.canoes = n; // for the tests: canoes drawn this frame
-    const wy = L.terrain.waterY, M0 = 6, span = (T.re + M0) - (T.le - M0);
+    // the canoes ferry across the river and back: they stay on the water between the two shorelines,
+    // rest a moment at each bank and turn round (a side view of a river has no 'downstream' to sail off to)
+    const wy = L.terrain.waterY, HALF = 2.6, SPEED = 1.2, REST = 2.5;
+    const xl = profileX(T.left, wy), xr = profileX(T.right, wy);
+    const xa = xl + HALF + 0.4, xb = xr - HALF - 0.4, D = Math.max(0, xb - xa), leg = D / SPEED, period = 2 * (leg + REST);
     for (let k = 0; k < n; k++) {
-      const dir = k % 2 ? -1 : 1;
-      const rel = ((hash2(L.id | 0, k, 91) * span + dir * 1.2 * tm) % span + span) % span;
-      const cx = T.le - M0 + rel;
+      let cx = (xa + xb) / 2, dir = k % 2 ? -1 : 1, go = 0.4;
+      if (D > 0.5) {
+        let ph = ((tm + hash2(L.id | 0, 0, 91) * period) % period + period) % period;
+        if (k % 2) ph = (ph + leg + REST) % period; // the second canoe starts from the far bank
+        if (ph < leg) { const q = ph / leg; cx = xa + D * (q * q * (3 - 2 * q)); dir = 1; go = Math.sin(Math.PI * q) * 0.6 + 0.4; }
+        else if (ph < leg + REST) { cx = xb; dir = -1; go = 0; }
+        else if (ph < 2 * leg + REST) { const q = (ph - leg - REST) / leg; cx = xb - D * (q * q * (3 - 2 * q)); dir = -1; go = Math.sin(Math.PI * q) * 0.6 + 0.4; }
+        else { cx = xa; dir = 1; go = 0; }
+      }
       const by = wy + Math.sin(tm * 1.7 + k * 2.1) * 0.03;
+      const yl = wy - 1.2, xll = profileX(T.left, yl), xrr = profileX(T.right, yl);
       ctx.save();
-      ctx.beginPath(); ctx.rect(T.le + 0.05, wy - 3, T.re - T.le - 0.1, 6); ctx.clip(); // the river only: the banks hide the canoe
+      ctx.beginPath(); ctx.moveTo(xl, wy + 3); ctx.lineTo(xr, wy + 3); ctx.lineTo(xr, wy); ctx.lineTo(xrr, yl); ctx.lineTo(xll, yl); ctx.lineTo(xl, wy); ctx.closePath();
+      ctx.clip(); // the river only: the hull never shows through a bank
       ctx.translate(cx, by);
       if (dir < 0) ctx.scale(-1, 1);
       // canoe + paddlers, then the paddles (grips at 1.5 / 3.7 m, 0.6 m above the waterline)
       spriteBox(r, ctx, 'canoe', 0, 0, 5.2, { top: 0.85, fallback: '#7a5a34' });
-      const stroke = (tm / 1.1 + k * 0.37) % 1, a = Math.sin(stroke * TAU) * 0.55;
+      const stroke = (tm / 1.1 + k * 0.37) % 1, a = Math.sin(stroke * TAU) * 0.55 * go;
       for (const gx of [-1.1, 1.1]) {
         const ox = gx, oy = 0.6, L2 = 1.5, px2 = ox + Math.sin(a - 0.3) * L2, py2 = oy - Math.cos(a - 0.3) * L2;
         ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 0.06; ctx.lineCap = 'round';

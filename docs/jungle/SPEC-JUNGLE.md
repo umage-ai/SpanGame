@@ -265,12 +265,16 @@ Canoes are purely visual. They never collide and never affect the sim.
 
 | type | body sprite(s) | wheels drawn | stride |
 |---|---|---|---|
-| walker | `jungle/walker.svg` / `walker_b.svg` | none | frame = `floor(dist / 0.35) % 2` |
-| monkey | `jungle/monkey.svg` / `monkey_b.svg` | none | 0.25 m |
-| handcart | `jungle/handcart.svg` / `handcart_b.svg` (the pusher's legs) | `jungle/wheel_wood.svg` at both axles | 0.35 m |
+| walker | animated figure (`js/features/jungle-figures.js`): colours and head load (bundle, basket, pot) picked per vehicle | none | gait cycle 1.3 m |
+| monkey | animated figure, bounding gait, swaying tail | none | gait cycle 0.62 m |
+| handcart | `jungle/handcart_cart.svg` (no pusher) plus an animated pusher leaning on the handle | `jungle/wheel_wood.svg` at both axles | 0.35 m |
 | oxcart | `jungle/oxcart.svg` / `oxcart_b.svg` (the ox's legs) | `jungle/wheel_wood.svg` at the rear wheel only (index 0); index 1 is the hooves | 0.45 m |
 | jeep | `jungle/jeep.svg` | existing `wheel.svg` at both axles | – |
-| livingstone | `jungle/livingstone.svg` / `livingstone_b.svg` | none | 0.35 m |
+| livingstone | animated figure: khaki, pith helmet, white beard, walking stick | none | gait cycle 1.3 m |
+
+The animated figures plant each stance foot and solve the legs with two-bone IK. The gait phase advances by distance / cycle, so feet never slide on the deck, and the stride eases to a standstill when the vehicle stops. A fallen figure flails. The `*_b.svg` frames and the old `walker`/`monkey`/`livingstone`/`handcart` sprites stay as fallbacks.
+
+Banks: `_drawBankTop` is wrapped on jungle themes. It draws a packed-earth trail at the road height, with log cribbing (or mossy temple stone) instead of the concrete abutment and no lane markings. The bank anchors use `jungle/anchor_wood.svg` or `anchor_stone.svg` in place of the concrete block. Canoes ferry between the two shorelines at the waterline, rest at each bank and turn round. They are clipped to the water, so they never run into a bank.
 
 `dist` is the distance travelled, `wheels[0].rot · r`, which is deterministic. Pose: the existing `_vehPose` math
 (the sprite width equals `def.length`). Foot traffic gets a 2 cm walking bob of `sin(dist · 2π / stride)`. There are

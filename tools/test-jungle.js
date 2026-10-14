@@ -16,6 +16,7 @@ const { BG } = require('./harness');
 const load = (rel) => require(path.join(ROOT, rel));
 load('js/render/effects.js');
 load('js/render/renderer.js');
+load('js/features/jungle-figures.js');
 load('js/features/jungle-fx.js');
 const Fx = BG.JungleFx;
 
@@ -38,6 +39,29 @@ if (NODE) {
     const T = BG.Renderer.THEMES[id];
     ok(!!T && T.sky.length === 3 && T.layers.length === 3 && T.water.length === 3 && !!T.ground && T.ships === false && T.props === id, id + ': theme is well-formed and registered');
     ok(T && T.lights === 0 && T.night === 0 && T.ambient === 'birds', id + ': no lights, day, birds');
+  }
+  section('animated figures: planted feet, every pose draws');
+  {
+    const F = BG.JungleFigures, C = 1.3;
+    ok(!!F && typeof F.human === 'function' && typeof F.monkey === 'function', 'BG.JungleFigures exists');
+    // during stance the foot moves back exactly as far as the body moves forward (phase advances by dist / C)
+    let slide = 0;
+    for (let p = 0; p < 0.49; p += 0.01) slide = Math.max(slide, Math.abs((F.foot(p + 0.01, C, 0.1, 0.5).x - F.foot(p, C, 0.1, 0.5).x) + 0.01 * C));
+    ok(slide < 1e-9 && F.foot(0.2, C, 0.1, 0.5).y === 0, 'a stance foot stays planted on the deck', slide);
+    ok(F.foot(0.75, C, 0.1, 0.5).y > 0.09, 'the swing foot lifts');
+    const k = F.ik(0, 0.9, 0.2, 0.06, 0.44, 0.43, 1);
+    ok(k.x > 0.1 && Math.abs(Math.hypot(k.x, k.y - 0.9) - 0.44) < 1e-9, 'knees bend forward, bones keep their length', k);
+    const noop = function () {};
+    const ctx = new Proxy({ createLinearGradient: () => ({ addColorStop: noop }) }, { get: (o, n) => n in o ? o[n] : noop, set: () => true });
+    let threw = null;
+    try {
+      for (let p = 0; p < 1; p += 0.125) for (const w of [0, 0.5, 1]) {
+        F.human(ctx, { p, w, load: 'basket', arms: 'carry' }); F.human(ctx, { p, w, hat: 'pith', beard: '#eee', stick: true });
+        F.human(ctx, { p, w, arms: 'push', hand: { x: 0.4, y: 0.77 }, lean: 0.35 }); F.human(ctx, { p, w, fall: true, t: p * 3 });
+        F.monkey(ctx, { p, w }); F.monkey(ctx, { p, w, fall: true, t: p });
+      }
+    } catch (e) { threw = e.message; }
+    ok(!threw, 'porters, Livingstone, the cart pusher and monkeys draw in every pose', threw);
   }
   const dir = path.join(ROOT, 'assets', 'sprites', 'jungle');
   for (const n in Fx.SPRITES) {
