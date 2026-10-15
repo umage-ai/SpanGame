@@ -1,9 +1,9 @@
 // Headless screenshot / smoke helper. NEVER opens a visible window.
-// Usage: node tools/shot.js [out.png] [script.js-to-eval-in-page] [waitMs]
+// Usage: node tools/shot.js [out.png] [script.js-to-eval-in-page] [waitMs]   (out.png defaults to <temp dir>/shot.png)
 const { chromium } = require('playwright');
 const path = require('path');
 (async () => {
-  const out = process.argv[2] || 'shot.png';
+  const out = process.argv[2] || path.join(require('os').tmpdir(), 'shot.png');
   const evalFile = process.argv[3];
   const wait = +(process.argv[4] || 1500);
   const browser = await require('./browser').launch(chromium);
