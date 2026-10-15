@@ -31,11 +31,9 @@ jobs:
         with:
           node-version: 22
 
-      # fast, dependency-free sanity checks (the browser tests need Chrome and run locally)
-      - name: Physics and level checks
-        run: |
-          node tools/test-physics.js
-          node tools/verify-levels.js
+      # every Node-only suite (dependency-free; the browser tests need Chrome and run locally)
+      - name: Node test suites
+        run: npm test
 
       # refresh the service worker's precache list + version so the deploy always matches its files
       - name: Generate precache
