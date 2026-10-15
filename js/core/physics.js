@@ -36,6 +36,10 @@
  *                 failReason: 'vehicle_fell' | 'vehicle_jumped' (airborne > 0.35 s over the gap) |
  *                 'stalled' (every driving vehicle stopped for 5 s) | 'timeout' | null
  *                 firstBreak: null | {beamIndex, m, mode:'tension'|'compression'|'bending', force, axial, bend, time, x, y}
+ *   Flexible tree anchors (docs/challenges/SPEC-CHALLENGES.md §1, anchors[i].tree): sim.trees [{anchor, node,
+ *                 baseX, baseY, x, y, length, rest, lean, ratio, peak, uprooted}] ([] without trees); event
+ *                 {type:'tree_uproot', anchor, x, y, moment, time}; failReason 'uprooted'; summary() adds
+ *                 treesUprooted, firstUproot, peakRoot only on levels with flexible trees.
  *   The sim keeps running after success/failure so collapses can be watched.
  * Fully deterministic: no Math.random (seeded PRNG only), fixed iteration order,
  * vehicle rotations are unit complex numbers (no sin/cos in the state update).
@@ -105,6 +109,9 @@
   const TRAIN_SPAWN_MIN = 4;      // m: never closer than this to the gap
   const PYLON_DAMP = 0.0015;      // fraction of a land pylon top's velocity removed per substep (rocking)
   const PYLON_TILT_MAX = 0.05;    // rad (~2.9°): a land pylon leaning further has overturned its footing
+  const TREE_FALL = 1.5707963267948966 + 0.35; // rad: an uprooted tree falling into the gap stops this far from upright
+  const TREE_FALL_COS = 0.9393727128473789;    // cos(0.35) = sin(TREE_FALL) (literals: no Math.sin in the sim)
+  const TREE_FALL_SIN = 0.34289780745545134;   // sin(0.35) = -cos(TREE_FALL)
 
   function mulberry32(a) {
     a = (a >>> 0) || 1;
@@ -265,6 +272,7 @@
         return o;
       });
       this._buildPylons();
+      this._buildTrees();
       for (let i = 0; i < nIn; i++) this.w[i] = this.nodes[i].fixed ? 0 : 1 / this.mass[i];
       this._buildBendLinks();
     }
@@ -369,6 +377,135 @@
           const ev = { type: 'pylon_fail', pier: i, x: this.pyBX[q], y: this.pyBY[q], moment: Math.abs(this.pyMf[q]), time: Math.round(this.time * 1000) / 1000 };
           if (!this.firstTopple) this.firstTopple = ev;
           this.events.push(ev);
+        }
+      }
+    }
+
+    /* Flexible tree anchors (docs/challenges/SPEC-CHALLENGES.md §1): the land-pylon model with other numbers. The
+     * anchor joint of a tree (anchors[i].tree) becomes a free node held by a rigid trunk to its root base (fixed)
+     * and a soft rotational root spring acting on th - th0 (the trunk may slant at rest). The roots are
+     * elastic-plastic: they never resist more than rootLimit and yield beyond it (the yielded rotation stays).
+     * Past uprootTilt from the rest direction the roots let go: the run fails ('uprooted') and the trunk pivots
+     * freely about its base until it lies down. Levels without flexible trees: nTree = 0, nothing runs. */
+    _buildTrees() {
+      this.nTree = 0;
+      this.trees = [];
+      const M = BG.Model;
+      const list = [];
+      if (M && M.treeAnchors) {
+        for (const s of M.treeAnchors(this.level)) {
+          const k = this.nodeIndex.get('a' + s.i);
+          if (k === undefined || !this.nodes[k].fixed) continue;
+          list.push({ s, k });
+        }
+      }
+      if (!list.length) return;
+      const T = BG.TreeAnchor || {};
+      const n = list.length;
+      this.nTree = n;
+      this.trN = new Int32Array(n); this.trA = new Int32Array(n);
+      this.trBX = new Float64Array(n); this.trBY = new Float64Array(n);
+      this.trLen = new Float64Array(n); this.trTh0 = new Float64Array(n); this.trThP = new Float64Array(n);
+      this.trDC = new Float64Array(n); this.trRC = new Float64Array(n); this.trCap = new Float64Array(n);
+      this.trTilt = new Float64Array(n); this.trSide = new Int8Array(n);
+      this.trM = new Float64Array(n); this.trMf = new Float64Array(n); this.trF = new Float64Array(n);
+      this.trAct = new Uint8Array(n); this.trPeak = new Float64Array(n);
+      this.treeDamp = clamp(num(T.damp, 0.002), 0, 0.5);
+      const colK = Math.max(1, num(T.colStiffness, 5e9));
+      for (let q = 0; q < n; q++) {
+        const s = list[q].s, k = list[q].k;
+        this.trN[q] = k; this.trA[q] = s.i;
+        this.trBX[q] = s.baseX; this.trBY[q] = s.baseY;
+        this.trLen[q] = s.length;
+        this.trTh0[q] = this.trThP[q] = s.rest;
+        this.trDC[q] = s.length / colK;
+        this.trRC[q] = 1 / s.stiffness;
+        this.trCap[q] = s.rootLimit;
+        this.trTilt[q] = s.uprootTilt;
+        this.trSide[q] = s.side;
+        this.trAct[q] = 1;
+        this.mass[k] += s.topMass;
+        this.nodes[k].fixed = false;
+        this.nodes[k].tree = true;
+        this.trees.push({ anchor: s.i, node: k, baseX: s.baseX, baseY: s.baseY, x: s.x, y: s.y, length: s.length,
+          rest: s.rest, lean: 0, ratio: 0, peak: 0, uprooted: false });
+      }
+      this.firstUproot = null;
+    }
+
+    /* XPBD: trunk length (rigid) + elastic-plastic root spring for every flexible tree (substep). */
+    _solveTrees(h) {
+      const n = this.nTree, px = this.px, py = this.py, w = this.w;
+      const invH2 = 1 / (h * h);
+      for (let q = 0; q < n; q++) {
+        const k = this.trN[q], wk = w[k];
+        if (wk === 0) continue;
+        const bx = this.trBX[q], by = this.trBY[q], L = this.trLen[q];
+        let dx = px[k] - bx, dy = py[k] - by;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 1e-9) continue;
+        // trunk (base fixed: the whole correction goes to the top)
+        const C = len - L;
+        const dl = -C / (wk + this.trDC[q] * invH2);
+        px[k] += wk * dl * dx / len; py[k] += wk * dl * dy / len;
+        this.trF[q] = -dl * invH2;
+        dx = px[k] - bx; dy = py[k] - by;
+        if (!this.trAct[q]) {
+          // uprooted: it pivots freely about its base and comes to rest lying down
+          this.trM[q] = 0;
+          const s = this.trSide[q];
+          if ((s > 0 && dx < 0) || (s < 0 && dx > 0)) {
+            // fell back onto the land
+            if (py[k] < by - 0.2) { const r = Math.sqrt(Math.max(0, L * L - 0.04)); px[k] = bx + (dx < 0 ? -r : r); py[k] = by - 0.2; }
+          } else if (dy < 0) {
+            // fell into the gap: at most TREE_FALL (pi/2 + 0.35 rad) from upright
+            const th = atan2Det(-dx, dy);
+            if (th > TREE_FALL || th < -TREE_FALL) {
+              const sg = th > 0 ? 1 : -1;
+              px[k] = bx - sg * L * TREE_FALL_COS; py[k] = by - L * TREE_FALL_SIN;
+            }
+          }
+          continue;
+        }
+        // roots: rotation of the trunk from its (plastic) rest direction
+        const l2 = dx * dx + dy * dy;
+        if (l2 < 1e-8) continue;
+        const th = atan2Det(-dx, dy);
+        const rc = this.trRC[q], cap = this.trCap[q];
+        // elastic-plastic: beyond rootLimit the roots yield, and the yielded rotation stays
+        let e = th - this.trThP[q];
+        const emax = cap * rc;
+        if (e > emax) { this.trThP[q] = th - emax; e = emax; }
+        else if (e < -emax) { this.trThP[q] = th + emax; e = -emax; }
+        const gx = -dy / l2, gy = dx / l2;
+        const W = wk * (gx * gx + gy * gy);
+        let dm = -e / (W + rc * invH2);
+        const lim = cap * h * h;
+        if (dm > lim) dm = lim; else if (dm < -lim) dm = -lim;
+        px[k] += wk * gx * dm; py[k] += wk * gy * dm;
+        this.trM[q] = dm * invH2;
+      }
+    }
+
+    /* root damping (velocity level) + moment filter / uprooting check */
+    _treePost(h, kf) {
+      const n = this.nTree, px = this.px, py = this.py, vx = this.vx, vy = this.vy, w = this.w;
+      const d = 1 - this.treeDamp;
+      for (let q = 0; q < n; q++) {
+        const k = this.trN[q];
+        if (w[k] === 0 || !this.trAct[q]) continue;
+        vx[k] *= d; vy[k] *= d;
+        this.trMf[q] += (this.trM[q] - this.trMf[q]) * kf;
+        const r = Math.abs(this.trMf[q]) / this.trCap[q];
+        if (r > this.trPeak[q]) this.trPeak[q] = r;
+        const th = atan2Det(-(px[k] - this.trBX[q]), py[k] - this.trBY[q]);
+        if (Math.abs(th - this.trTh0[q]) > this.trTilt[q]) {
+          // uprooted: the roots tear out and the tree falls about its base
+          this.trAct[q] = 0; this.trM[q] = 0;
+          const ev = { type: 'tree_uproot', anchor: this.trA[q], x: this.trBX[q], y: this.trBY[q], moment: Math.abs(this.trMf[q]), time: Math.round(this.time * 1000) / 1000 };
+          if (!this.firstUproot) this.firstUproot = ev;
+          this.events.push(ev);
+          if (this.status === 'running') { this.status = 'failed'; this.failReason = 'uprooted'; }
         }
       }
     }
@@ -559,6 +696,13 @@
         for (let q = 0; q < this.nPyl; q++) if (!this.pyAct[q]) fallen++;
         out.pylonsToppled = fallen;
         out.firstTopple = this.firstTopple;
+      }
+      if (this.nTree) { // flexible tree anchors (SPEC-CHALLENGES §1)
+        let up = 0, pk = 0;
+        for (let q = 0; q < this.nTree; q++) { if (!this.trAct[q]) up++; if (this.trPeak[q] > pk) pk = this.trPeak[q]; }
+        out.treesUprooted = up;
+        out.firstUproot = this.firstUproot;
+        out.peakRoot = Math.round(pk * 10000) / 10000;
       }
       if (this._cars.length) {
         let der = 0;
@@ -805,6 +949,7 @@
         }
       }
       if (this.nPyl) this._solvePylons(h); // land pylons (SPEC §17)
+      if (this.nTree) this._solveTrees(h); // flexible tree anchors (SPEC-CHALLENGES §1)
 
       // 4. vehicle contacts
       for (let k = 0; k < vs.length; k++) {
@@ -940,6 +1085,7 @@
       // 8. stress filter + breaking
       const kf = Math.min(1, h / STRESS_TAU);
       if (this.nPyl) this._pylonPost(h, kf);
+      if (this.nTree) this._treePost(h, kf);
       const fF = this.fFilt, peak = this.peakArr, tl = this.tlim, cl = this.clim, frag = this.frag;
       for (let l = 0; l < nl; l++) if (this.lact[l]) this.lMf[l] += (this.lM[l] - this.lMf[l]) * kf;
       for (let j = 0; j < nb; j++) if (active[j]) fF[j] += (fRaw[j] - fF[j]) * kf;
@@ -1884,6 +2030,15 @@
         p.footing = this.pyAct[q] ? Math.abs(this.pyMf[q]) / this.pyCap[q] : 1;
         p.peak = this.pyPeak[q];
         p.failed = !this.pyAct[q];
+      }
+      for (let q = 0; q < this.nTree; q++) {
+        // flexible trees: live joint, lean from rest (rad, + = top moved toward +x) and root load (|moment| / limit)
+        const tr = this.trees[q], k = this.trN[q];
+        tr.x = this.px[k]; tr.y = this.py[k];
+        tr.lean = -(atan2Det(-(this.px[k] - this.trBX[q]), this.py[k] - this.trBY[q]) - this.trTh0[q]);
+        tr.ratio = this.trAct[q] ? Math.abs(this.trMf[q]) / this.trCap[q] : 1;
+        tr.peak = this.trPeak[q];
+        tr.uprooted = !this.trAct[q];
       }
       for (const v of this.vehicles) {
         if (v.kind === 'train') { if (v._live) this._syncTrain(v); continue; }

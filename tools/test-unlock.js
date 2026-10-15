@@ -6,7 +6,7 @@
 // - campaigns open after road 10 (Iron Road) / road 15 (Famous Bridges); ?unlockall opens everything
 // - "skipped" levels (open, unfinished, a later level done), lock texts, the rule text
 // - the branching Anchorages chapter (54-58): opens after 40, own unlock list, no gates, own finale, main line untouched
-// - the branching Jungle chapter (59-68): opens after 30, own unlock list, no gates, own finale, main line untouched
+// - the branching Jungle chapter (59-70): opens after 30, own unlock list, no gates, own finale, main line untouched
 // - migration: levels the old rule had open (or that were played) stay open; other levels follow the gates
 'use strict';
 const fs = require('fs');
@@ -82,9 +82,9 @@ ok('finales: 53 bonus, 58 anchorages, 50 road', S.finaleOf(lvOf(53)) === 'bonus'
 fresh(range(1, 50));
 ok('50 done: both bonus chapters open (51 and 54)', open(51) && open(54));
 
-// ---- the hidden Jungle chapter (59-68) branches off after level 30, exactly like the Anchorages
-ok('Jungle registered as a branching bonus chapter of the Roads (59-68, after 30)', (() => { const b = S.bonusChapterOf(lvOf(63)); return !!b && b.id === 'jungle' && b.first === 59 && b.last === 68 && b.unlockAfter === 30 && S.bonusChapterOf(lvOf(58)).id === 'anchorages' && !S.bonusChapterOf(lvOf(30)); })());
-ok('Jungle levels are Roads levels and none of them is a gate', range(59, 68).every(id => lvOf(id) && S.campaignOf(lvOf(id)) === 'road' && !S.isGate(lvOf(id))));
+// ---- the hidden Jungle chapter (59-70) branches off after level 30, exactly like the Anchorages
+ok('Jungle registered as a branching bonus chapter of the Roads (59-70, after 30)', (() => { const b = S.bonusChapterOf(lvOf(63)); return !!b && b.id === 'jungle' && b.first === 59 && b.last === 70 && b.unlockAfter === 30 && S.bonusChapterOf(lvOf(58)).id === 'anchorages' && !S.bonusChapterOf(lvOf(30)); })());
+ok('Jungle levels are Roads levels and none of them is a gate', range(59, 70).every(id => lvOf(id) && S.campaignOf(lvOf(id)) === 'road' && !S.isGate(lvOf(id))));
 fresh(range(1, 29));
 ok('Jungle closed before level 30 (lock text names level 30 and the chapter)', !open(59) && /level 30/.test(S.lockText(59, L) || '') && /Jungle/.test(S.lockText(59, L) || ''), S.lockText(59, L));
 fresh(range(1, 30));
@@ -93,12 +93,12 @@ fresh(range(1, 30).concat([59]));
 ok('59 done: 60 and 61 open (skip one), 62 locked', open(60) && open(61) && !open(62));
 fresh(range(1, 30).concat([59, 61]));
 ok('59 + 61 done: 62 and 63 open, 60 skipped', open(62) && open(63) && !open(64) && S.isSkipped(60, L));
-fresh(range(1, 30).concat(range(59, 68)));
+fresh(range(1, 30).concat(range(59, 70)));
 ok('finishing the Jungle never marks main-line levels as skipped or opens them early', !S.isSkipped(31, L) && open(32) && !open(33));
 fresh(range(1, 29).concat([59]), { legacy: true });
-ok('migration keeps nothing in the Jungle (it postdates the gates)', S.migrateUnlocks(L).every(id => id < 59 || id > 68) && !open(59));
-ok('unlock lists: 59-68 on their own, the main line skips them', JSON.stringify(S.unlockList(L, lvOf(61)).map(l => l.id)) === JSON.stringify(range(59, 68)) && S.unlockList(L, lvOf(53)).every(l => l.id < 54));
-ok('finales: 68 jungle, 67 none, 58 still anchorages', S.finaleOf(lvOf(68)) === 'jungle' && S.finaleOf(lvOf(67)) === null && S.finaleOf(lvOf(58)) === 'anchorages');
+ok('migration keeps nothing in the Jungle (it postdates the gates)', S.migrateUnlocks(L).every(id => id < 59 || id > 70) && !open(59));
+ok('unlock lists: 59-70 on their own, the main line skips them', JSON.stringify(S.unlockList(L, lvOf(61)).map(l => l.id)) === JSON.stringify(range(59, 70)) && S.unlockList(L, lvOf(53)).every(l => l.id < 54));
+ok('finales: 70 jungle, 69 and 68 none (Livingstone stays on 68), 58 still anchorages', S.finaleOf(lvOf(70)) === 'jungle' && S.finaleOf(lvOf(69)) === null && S.finaleOf(lvOf(68)) === null && S.finaleOf(lvOf(67)) === null && S.finaleOf(lvOf(58)) === 'anchorages');
 fresh(range(1, 40));
 ok('40 done: Jungle (59) and Anchorages (54) both open', open(59) && open(54));
 

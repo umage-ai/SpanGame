@@ -19,7 +19,7 @@
     'hud.title.endlessBest': 'Bedste runde: {cleared} klaret',
     'hud.title.endlessNew': 'Stadig sværere overgange',
     'hud.title.history': 'Historik og statistik',
-    'hud.title.badgesTip': 'Optjente udfordringsmærker',
+    'hud.title.badgesTip': 'Optjente udfordringsstjerner',
 
     // ---- banevalg
     'hud.levels.back': 'Tilbage (Esc)',
@@ -235,6 +235,7 @@
     'hud.sim.fastest': 'Hurtigst',
     'hud.sim.seconds': 's',
     'hud.sim.across': 'over',
+    'hud.sim.roots': 'Rødder {pct}',
     'hud.sim.follow': 'Følg',
     'hud.sim.followTip': 'Kameraet følger trafikken (F)',
     'hud.sim.track': 'Spor',

@@ -1,4 +1,4 @@
-/* SPAN — Jungle chapter visuals (levels 59-68), docs/jungle/SPEC-JUNGLE.md §4.
+/* SPAN — Jungle chapter visuals (levels 59-70), docs/jungle/SPEC-JUNGLE.md §4.
  *
  * Entirely additive, like forces-fx.js: it wraps BG.Renderer.prototype methods and never edits them, and it does
  * nothing on a level that is not a jungle level (jungle materials / traffic types are recognised by id, the
@@ -9,8 +9,10 @@
  *   RP._prop                                 buttress trees, banana plants, bamboo clumps, ferns, temple ruins
  *   RP._drawBeamItems                        liana (before), bamboo + bamboo walkway (after) with their own look
  *   RP._drawVehicle                          porter, monkey, hand cart, ox cart, jeep, Dr Livingstone
- *   RP._drawPierItem                         ruined stone pillars on jungle_temple
- *   RP._drawAnchors                          lashing knots on tree anchors
+ *   RP._drawPierItem                         ruined stone pillars on jungle_temple; lashed timber trestle / log crib piers and
+ *                                            A-frame log pylons elsewhere, never concrete (challenges spec §4.1)
+ *   RP._drawAnchors / _drawJoints            lashing knots on tree anchors (at the live joint of a bending tree), ground stakes
+ *   RP._drawDeadman                          timber block instead of concrete; no block under a stake
  *   RP._drawShips (after the original)       world pass behind the beams: waterfall, tree / ruin anchors, hanging
  *                                            vines, animals, canoes, crocodile, Stanley and Livingstone
  *   RP._drawLights                           speech bubbles (screen space, on top)
@@ -67,7 +69,8 @@
     handcart: [260, 140], handcart_b: [260, 140], oxcart: [520, 200], oxcart_b: [520, 200], jeep: [360, 190],
     livingstone: [100, 180], livingstone_b: [100, 180], stanley: [90, 185], stanley_b: [90, 185],
     handcart_cart: [260, 140], anchor_wood: [128, 128], anchor_stone: [128, 128], wheel_wood: [100, 100], canoe: [520, 110], parrot: [40, 70], snake: [180, 60], tiger: [220, 90],
-    elephant: [400, 300], croc: [300, 30], fern: [140, 90], ruin_head: [300, 360], ruin_pillar: [200, 400], ruin_cap: [240, 80]
+    elephant: [400, 300], croc: [300, 30], fern: [140, 90], ruin_head: [300, 360], ruin_pillar: [200, 400], ruin_cap: [240, 80],
+    stake: [40, 120]
   };
   // vehicle type -> [sprite, wheel sprite or null, stride (m) or 0]; the sprite width is def.length * 100
   const TYPES = {
@@ -512,7 +515,7 @@
         for (let x = ab0 - off; x < ab1; x += 0.9) {
           const a = Math.max(x, ab0), b = Math.min(x + 0.9, ab1); if (b - a < 0.05) continue;
           const r = U.hash(Math.round(x * 13) + i * 7 + Math.round(edge));
-          g.fillStyle = mix('#a39a80', '#7d7560', r * 0.6);
+          g.fillStyle = mix('#b49a6a', '#8a7450', r * 0.6); // weathered sandstone, like the temple behind (not concrete grey)
           g.fillRect(a + 0.02, yy + 0.02, b - a - 0.04, hRow - 0.04);
           g.fillStyle = 'rgba(255,250,230,0.18)'; g.fillRect(a + 0.02, yy + hRow - 0.08, b - a - 0.04, 0.06);
           if (r < 0.35) { g.fillStyle = 'rgba(70,120,50,0.55)'; g.beginPath(); g.ellipse((a + b) / 2, yy + hRow - 0.04, (b - a) * 0.35, 0.07, 0, 0, TAU); g.fill(); }
@@ -614,20 +617,206 @@
     ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = px;
     ctx.restore();
   }
+  // ------------------------------------------------------------------ timber piers (never concrete, challenges spec §4.1)
+  // plain jungle: a lashed log trestle on a river-stone footing (tall) or a log crib (short); jungle_temple keeps the ruin
+  // pillar; a land pylon (p.ground) is an A-frame log tower on any jungle theme. All of it is deterministic from the x.
+  const WOOD = { dark: '#5e3e22', mid: '#7a5432', lit: '#9a6a3a', pole: '#6a4a2a', end: '#c89a62', rope: '#c9b58a', stoneA: '#7d7a68', stoneB: '#5f5c4e' };
+  const tint = (col, invalid) => invalid ? mix(col, '#d03828', 0.55) : col;
+  /** a log from a to b (butt ends) with a lit stripe along its upper side; `ends` paints the sawn rings */
+  function logPole(ctx, ax, ay, bx, by, w, col, invalid, ends) {
+    const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = tint(col, invalid); ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.save();
+    ctx.globalAlpha *= 0.5; ctx.strokeStyle = tint(WOOD.lit, invalid); ctx.lineWidth = w * 0.28;
+    ctx.beginPath(); ctx.moveTo(ax + nx * w * 0.22, ay + ny * w * 0.22); ctx.lineTo(bx + nx * w * 0.22, by + ny * w * 0.22); ctx.stroke();
+    ctx.restore();
+    if (ends) {
+      ctx.fillStyle = tint(WOOD.end, invalid);
+      const ang = Math.atan2(dy, dx);
+      for (const e of [[ax, ay], [bx, by]]) { ctx.beginPath(); ctx.ellipse(e[0], e[1], w * 0.2, w * 0.5, ang, 0, TAU); ctx.fill(); }
+    }
+  }
+  /** three rope wraps across a pole of width w at (x, y); ang = the pole's direction */
+  function lashing(ctx, x, y, ang, w, invalid) {
+    const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux;
+    ctx.strokeStyle = tint(WOOD.rope, invalid); ctx.lineWidth = Math.max(0.05, w * 0.2); ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let k = -1; k <= 1; k++) {
+      const ox = x + ux * k * w * 0.3, oy = y + uy * k * w * 0.3;
+      ctx.moveTo(ox + nx * w * 0.62 - ux * w * 0.06, oy + ny * w * 0.62 - uy * w * 0.06); ctx.lineTo(ox - nx * w * 0.62 + ux * w * 0.06, oy - ny * w * 0.62 + uy * w * 0.06);
+    }
+    ctx.stroke();
+  }
+  /** a footing of rounded river stones whose tops are at about baseY + 0.55; moss on some */
+  function stoneFooting(ctx, x, baseY, width, invalid) {
+    const sd = Math.round(x * 10), n = Math.max(3, Math.round(width / 0.8));
+    ctx.fillStyle = tint(WOOD.stoneB, invalid);
+    ctx.fillRect(x - width / 2 + 0.15, baseY - 0.05, width - 0.3, 0.3);
+    for (let k = 0; k < n; k++) {
+      const h1 = hash2(sd, k, 31), h2 = hash2(sd, k, 32);
+      const sx = x - width / 2 + (k + 0.5) * width / n + (h1 - 0.5) * 0.25, rx = width / n * (0.55 + h2 * 0.2), ry = 0.26 + h1 * 0.12;
+      const sy = baseY + 0.28 + (k % 2 ? 0.14 : 0);
+      ctx.fillStyle = tint(k % 2 ? WOOD.stoneB : WOOD.stoneA, invalid);
+      ctx.beginPath(); ctx.ellipse(sx, sy, rx, ry, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(sx + rx * 0.15, sy - ry * 0.35, rx * 0.7, ry * 0.45, 0, 0, TAU); ctx.fill();
+      if (!invalid && h1 > 0.4) { ctx.fillStyle = 'rgba(80,140,50,0.55)'; ctx.beginPath(); ctx.ellipse(sx - rx * 0.1, sy + ry * 0.75, rx * 0.75, ry * 0.32, 0, 0, TAU); ctx.fill(); }
+    }
+  }
+  function waterStain(ctx, r, x, baseY, topY, hw, redraw) { // repaint what is below the waterline darker, clipped to it
+    const t = r.level.terrain;
+    if (t.waterY === null || t.waterY === undefined || r.theme.lava || !(t.waterY > baseY && t.waterY < topY)) return;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x - hw, baseY - 1, hw * 2, t.waterY - baseY + 1.3); ctx.clip();
+    redraw('rgba(30,48,40,0.38)');
+    ctx.restore();
+  }
+  function timberPier(r, ctx, p, ghost, invalid) {
+    const x = p.x, baseY = p.baseY, topY = p.topY, footTop = baseY + 0.55, capH = 0.42, capY = topY - capH;
+    const crib = topY - baseY < 3;
+    ctx.save();
+    if (ghost) ctx.globalAlpha = 0.55;
+    stoneFooting(ctx, x, baseY, crib ? 3.2 : 3.6, invalid);
+    const draw = (stain) => { // the whole timberwork; `stain` repaints it in one flat colour (the water line)
+      const ends = !stain;
+      const pole = (ax, ay, bx, by, w, c, en) => {
+        if (stain) { ctx.lineCap = 'butt'; ctx.strokeStyle = stain; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); } else logPole(ctx, ax, ay, bx, by, w, c, invalid, en);
+      };
+      if (crib) {
+        const H = Math.max(0.2, topY - footTop), nl = Math.max(1, Math.round(H / 0.42)), th = H / nl;
+        for (let k = 0; k < nl; k++) {
+          const yc = footTop + (k + 0.5) * th, across = (nl - 1 - k) % 2 === 0, c = mix(WOOD.dark, WOOD.mid, hash2(Math.round(x * 10), k, 5));
+          if (across) {
+            pole(x - 1.25, yc, x + 1.25, yc, th * 0.94, c, true);
+          } else {
+            pole(x - 0.75, yc, x + 0.75, yc, th * 0.62, WOOD.dark, false);
+            for (const ox of [-0.75, 0.75]) {
+              ctx.fillStyle = stain || tint(c, invalid); ctx.beginPath(); ctx.arc(x + ox, yc, th * 0.48, 0, TAU); ctx.fill();
+              if (ends) { ctx.fillStyle = tint(WOOD.end, invalid); ctx.beginPath(); ctx.arc(x + ox, yc, th * 0.3, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(70,40,15,0.55)'; ctx.lineWidth = 0.025; ctx.beginPath(); ctx.arc(x + ox, yc, th * 0.17, 0, TAU); ctx.stroke(); }
+            }
+          }
+        }
+        if (ends) for (const ox of [-0.8, 0.8]) lashing(ctx, x + ox, topY - th / 2, Math.PI / 2, th * 0.94, invalid);
+      } else {
+        const H = capY - footTop, n = Math.max(1, Math.round(H / 2.5));
+        const lx = (y) => 1.35 - 0.5 * (y - footTop) / H; // half-spacing of the legs: raked in towards the cap
+        pole(x - lx(footTop), footTop - 0.1, x - lx(capY), capY, 0.36, WOOD.dark, true);
+        pole(x + lx(footTop), footTop - 0.1, x + lx(capY), capY, 0.36, WOOD.dark, true);
+        for (let k = 0; k < n; k++) {
+          const y0 = footTop + H * k / n, y1 = footTop + H * (k + 1) / n;
+          pole(x - lx(y0), y0, x + lx(y1), y1, 0.17, WOOD.pole, false);
+          pole(x + lx(y0), y0, x - lx(y1), y1, 0.17, WOOD.pole, false);
+          if (k > 0) pole(x - lx(y0), y0, x + lx(y0), y0, 0.2, WOOD.pole, false);
+        }
+        if (ends) {
+          for (let k = 0; k < n; k++) {
+            const y0 = footTop + H * k / n, y1 = footTop + H * (k + 1) / n, ym = (y0 + y1) / 2, ang = Math.atan2(y1 - y0, lx(y1) + lx(y0));
+            lashing(ctx, x, ym, ang, 0.17, invalid); lashing(ctx, x, ym, -ang, 0.17, invalid);
+            if (k > 0) for (const s of [-1, 1]) lashing(ctx, x + s * lx(y0), y0, Math.PI / 2, 0.36, invalid);
+          }
+          for (const s of [-1, 1]) lashing(ctx, x + s * lx(capY), capY - 0.1, Math.PI / 2, 0.36, invalid);
+        }
+        pole(x - 1.15, topY - capH / 2, x + 1.15, topY - capH / 2, capH, WOOD.mid, true);
+        if (ends) for (const s of [-1, 1]) lashing(ctx, x + s * lx(capY), topY - capH / 2, 0, capH, invalid);
+      }
+    };
+    draw(null);
+    waterStain(ctx, r, x, baseY, topY, 1.8, draw);
+    if (invalid) { ctx.fillStyle = 'rgba(220,60,40,0.22)'; ctx.fillRect(x - 1.5, baseY, 3, topY - baseY); }
+    ctx.restore();
+  }
+  /** land pylon: an A-frame of lashed logs on a stone footing, tilting with the live top (p.topX) like the concrete one */
+  function aframePylon(r, ctx, p, ghost, invalid) {
+    const x = p.x, baseY = p.baseY, tx = p.topX !== undefined ? p.topX : x, ty = p.topY;
+    const dx = tx - x, dy = ty - baseY, len = Math.hypot(dx, dy);
+    if (len < 0.2) return;
+    ctx.save();
+    if (ghost) ctx.globalAlpha = 0.55;
+    stoneFooting(ctx, x, baseY - 0.55, 4.0, invalid);
+    ctx.translate(x, baseY + 0.1);
+    ctx.rotate(Math.atan2(-dx, dy));
+    const L = len - 0.1, capH = 0.45, wb = 1.1, wt = 0.42, hw = (u) => wb + (wt - wb) * (u / L);
+    logPole(ctx, -wb, 0, -wt, L - capH, 0.4, WOOD.dark, invalid, true);
+    logPole(ctx, wb, 0, wt, L - capH, 0.4, WOOD.dark, invalid, true);
+    for (const f of [0.3, 0.62]) { const u = L * f; logPole(ctx, -hw(u), u, hw(u), u, 0.22, WOOD.pole, invalid, false); lashing(ctx, -hw(u), u, Math.PI / 2, 0.4, invalid); lashing(ctx, hw(u), u, Math.PI / 2, 0.4, invalid); }
+    logPole(ctx, -hw(L * 0.3), L * 0.3, hw(L * 0.62), L * 0.62, 0.18, WOOD.pole, invalid, false);
+    logPole(ctx, hw(L * 0.3), L * 0.3, -hw(L * 0.62), L * 0.62, 0.18, WOOD.pole, invalid, false);
+    logPole(ctx, -wt - 0.5, L - capH / 2, wt + 0.5, L - capH / 2, capH, WOOD.mid, invalid, true);
+    for (const s of [-1, 1]) lashing(ctx, s * wt, L - capH / 2, 0, capH, invalid);
+    if (!invalid && !p.failed && p.footing > 0.85) { // footing about to give way
+      ctx.fillStyle = 'rgba(255,60,40,' + (0.25 + 0.3 * Math.min(1, (p.footing - 0.85) / 0.15)) + ')';
+      ctx.fillRect(-wb - 0.3, -0.2, wb * 2 + 0.6, 1.0);
+    }
+    ctx.restore();
+  }
   const origPier = RP._drawPierItem;
   RP._drawPierItem = function (ctx, p, ghost, invalid) {
-    if (this.themeId !== 'jungle_temple' || p.ground || !(p.topY > p.baseY + 0.1)) return origPier.apply(this, arguments);
-    JungleFx.hits++;
-    pillar(this, ctx, p.x, p.baseY, p.topY, 2.0, { ghost, invalid });
+    if (!isJungle(this.level)) return origPier.apply(this, arguments);
+    JungleFx.hits++; JungleFx.pierHits++;
+    if (p.ground) { JungleFx.pierKinds.aframe++; return safe(() => aframePylon(this, ctx, p, ghost, invalid)); }
+    if (!(p.topY > p.baseY + 0.1)) return;
+    if (this.themeId === 'jungle_temple') { JungleFx.pierKinds.pillar++; return pillar(this, ctx, p.x, p.baseY, p.topY, 2.0, { ghost, invalid }); }
+    JungleFx.pierKinds[p.topY - p.baseY < 3 ? 'crib' : 'trestle']++;
+    safe(() => timberPier(this, ctx, p, ghost, invalid));
   };
 
-  // ------------------------------------------------------------------ anchors: lashing knots on trees
+  // ------------------------------------------------------------------ anchors: lashing knots on trees, ground stakes
+  /** sim.trees by anchor index while a run (or its results) is on screen; null in edit mode and the undeformed view,
+   *  and on a build of the physics without bending trees (then the trees are drawn at rest) */
+  function liveTrees(r) {
+    const st = r._jst;
+    if (!st || !st.sim || st.mode === 'edit' || (st.mode === 'results' && st.undeformed)) return null;
+    const list = st.sim.trees;
+    if (!list || !list.length) return null;
+    const m = {};
+    for (const e of list) if (e && e.anchor !== undefined && isFinite(e.x) && isFinite(e.y)) m[e.anchor] = e;
+    return m;
+  }
+  const hasStake = (L) => !!(L && L.anchors && L.anchors.some(a => a.deco === 'stake'));
+  /** a ground stake: a sharpened peg leaning away from the gap, a lashing and a rope knot at the anchor point */
+  function drawStake(r, ctx, a, i, L, edit, used) {
+    const T = L.terrain, left = a.x < (T.leftEdge + T.rightEdge) / 2, rot = left ? 0.26 : -0.26, away = left ? -1 : 1;
+    JungleFx.stakes++;
+    ctx.save();
+    if (edit && used && !used['a' + i]) { // an unused anchor pulses, like the others
+      const p = 0.5 + 0.5 * Math.sin(r.time * 3 + i);
+      ctx.fillStyle = 'rgba(255,214,90,' + (0.18 + 0.22 * p) + ')';
+      ctx.beginPath(); ctx.arc(a.x, a.y, 0.55 + 0.25 * p, 0, TAU); ctx.fill();
+    }
+    spriteBox(r, ctx, 'stake', a.x, a.y, 0.4, { top: 0.9, rot, fallback: '#7a5432' });
+    // the rope comes down from the peg's lashing to a knot at the anchor point
+    const lx = a.x + away * 0.13, ly = a.y + 0.42;
+    ctx.strokeStyle = '#c9b58a'; ctx.lineWidth = 0.07; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.quadraticCurveTo(a.x + away * 0.05, a.y + 0.3, a.x, a.y + 0.07); ctx.stroke();
+    ctx.fillStyle = '#8a7648'; ctx.beginPath(); ctx.arc(a.x, a.y + 0.07, 0.1, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#d8c698'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(a.x, a.y + 0.07, 0.1, 0, TAU); ctx.stroke();
+    ctx.restore();
+    if (edit) { // the label sits under the peg, in screen space
+      ctx.save();
+      r._screenXf(ctx);
+      const s = r.worldToScreen(a.x, a.y);
+      r._label(ctx, s.x, s.y + 20, tr('features.jungle.label.stake'), 'rgba(40,32,10,0.8)', '#ffd860', 10);
+      ctx.restore();
+    }
+  }
   const origAnchors = RP._drawAnchors;
-  RP._drawAnchors = function (ctx, L) {
+  RP._drawAnchors = function (ctx, L, edit, used) {
     if (isJungle(L)) { // lashed posts (or temple stone) for the bolts, not concrete with hazard stripes
+      const live = liveTrees(this), anchors = L.anchors || [], stakes = [];
+      let L2 = L;
+      if (hasStake(L) || live) { // stakes get no bolt (drawn below); a bending tree's knot sits at its live joint
+        L2 = Object.assign({}, L, { anchors: anchors.map((a, i) => {
+          if (a.deco === 'stake') { stakes.push(i); return Object.assign({}, a, { x: -1e6 }); }
+          const e = live && live[i];
+          return e ? Object.assign({}, a, { x: e.x, y: e.y }) : a;
+        }) });
+      }
       const raster = Sprites.raster, alt = 'jungle/anchor_' + (L.theme === 'jungle_temple' ? 'stone' : 'wood');
       Sprites.raster = function (n) { return raster.apply(Sprites, [n === 'anchor' ? alt : n].concat([].slice.call(arguments, 1))) || (n === 'anchor' ? raster.apply(Sprites, arguments) : null); };
-      try { return jungleAnchors.apply(this, arguments); } finally { Sprites.raster = raster; }
+      try { jungleAnchors.call(this, ctx, L2, edit, used); } finally { Sprites.raster = raster; }
+      for (const i of stakes) safe(() => drawStake(this, ctx, anchors[i], i, L, edit, used));
+      return;
     }
     return jungleAnchors.apply(this, arguments);
   };
@@ -648,6 +837,47 @@
       });
     }
     return origAnchors.apply(this, arguments);
+  };
+  // the joint caps drawn over the anchors: none on a stake, and on a bending tree at the live joint
+  const origJoints = RP._drawJoints;
+  RP._drawJoints = function (ctx, pts) {
+    const L = this.level, live = isJungle(L) && pts ? liveTrees(this) : null;
+    if (!pts || !isJungle(L) || !(live || hasStake(L))) return origJoints.apply(this, arguments);
+    const anchors = L.anchors || [], out = [];
+    for (const p of pts) {
+      const i = anchors.indexOf(p);
+      if (i >= 0 && anchors[i].deco === 'stake') continue;
+      const e = i >= 0 && live && live[i];
+      out.push(e ? { x: e.x, y: e.y } : p);
+    }
+    return origJoints.call(this, ctx, out);
+  };
+  // anchor blocks buried in the bank: a timber block (never concrete); a stake has none
+  const origDeadman = RP._drawDeadman;
+  RP._drawDeadman = function (ctx, a) {
+    const L = this.level;
+    if (!isJungle(L)) return origDeadman.apply(this, arguments);
+    const an = L.anchors && L.anchors[a.i];
+    if (an && an.deco === 'stake') return;
+    JungleFx.hits++;
+    safe(() => {
+      const s = a.side;
+      let x0, y0, x1, y1;
+      if (a.kind === 'hill') { x0 = Math.min(a.x - s * 2.4, a.x + s * 0.12); x1 = Math.max(a.x - s * 2.4, a.x + s * 0.12); y0 = a.y - 1.9; y1 = a.y + 0.35; }
+      else { x0 = a.x - 1.2; x1 = a.x + 1.2; y0 = a.surfaceY - 1.7; y1 = a.surfaceY; }
+      ctx.save();
+      const n = Math.max(2, Math.round((y1 - y0) / 0.4)), th = (y1 - y0) / n;
+      for (let k = 0; k < n; k++) {
+        ctx.fillStyle = mix(WOOD.dark, WOOD.mid, hash2(Math.round(a.x * 10), k, 6));
+        ctx.fillRect(x0, y0 + k * th + 0.02, x1 - x0, th - 0.04);
+        ctx.fillStyle = WOOD.end; ctx.beginPath(); ctx.ellipse(x1, y0 + (k + 0.5) * th, 0.1, th * 0.45, 0, 0, TAU); ctx.fill();
+      }
+      ctx.restore();
+      ctx.save();
+      ctx.strokeStyle = '#c9b58a'; ctx.lineWidth = 0.09; ctx.lineCap = 'round'; // rope up to the anchor point
+      ctx.beginPath(); ctx.moveTo(a.kind === 'hill' ? a.x + s * 0.1 : a.x, a.kind === 'hill' ? a.y - 0.3 : y1 - 0.3); ctx.lineTo(a.x, a.y); ctx.stroke();
+      ctx.restore();
+    });
   };
 
   // ------------------------------------------------------------------ per-frame state (set by render)
@@ -698,7 +928,7 @@
   }
   function perchSpots(r, L, T) { // tree spots for the parrot and the resting monkeys: [{x, y}] (left first)
     const spots = [];
-    for (const a of L.anchors || []) if (a.deco === 'tree' && a.y > Math.max(T.ly, T.ry) + 1) spots.push({ x: a.x - (a.x < (T.le + T.re) / 2 ? 1.0 : -1.0) * 0.6, y: a.y + 0.05, anchor: true, side: a.x < (T.le + T.re) / 2 ? 0 : 1 });
+    (L.anchors || []).forEach((a, ai) => { if (a.deco === 'tree' && a.y > Math.max(T.ly, T.ry) + 1) spots.push({ ai, x: a.x - (a.x < (T.le + T.re) / 2 ? 1.0 : -1.0) * 0.6, y: a.y + 0.05, anchor: true, side: a.x < (T.le + T.re) / 2 ? 0 : 1 }); });
     for (let side = 0; side < 2; side++) {
       let n = 0;
       for (let i = side ? Math.ceil((T.re + 6) / 5.5) : Math.floor((T.le - 6) / 5.5); n < 2 && Math.abs(i * 5.5 - (side ? T.re : T.le)) < 60; i += side ? 1 : -1) {
@@ -716,41 +946,137 @@
     ctx.beginPath(); ctx.moveTo(x - dir * len * 0.5, y - 0.15); ctx.quadraticCurveTo(x, y - 0.1, x + dir * len * 0.5, y + 0.1); ctx.stroke();
     ctx.restore();
   }
-  function drawTreeAnchor(r, ctx, a, L, T) {
-    const mid = (T.le + T.re) / 2;
-    const edge = Math.abs(a.x - T.le) <= 1.2 || Math.abs(a.x - T.re) <= 1.2;
-    const side = a.x < mid ? -1 : 1;
-    const cx = edge ? a.x + side * 1.1 : a.x;
-    const base = r.groundY(cx) - 0.3, top = a.y + 1.6, h = top - base;
-    if (!(h > 1)) return;
-    const bw = 1.5, tw = 0.48;
+  /** root base of tree anchor i: Model.treeBase when the model has it (docs/challenges/SPEC-CHALLENGES.md §1.4), else the same
+   *  defaults worked out here: an edge tree 1.1 m behind the edge on the bank, a mid-gap tree on the floor. side: -1 left bank */
+  function treeBaseFor(L, i, gy) {
+    const a = L.anchors[i], Mo = BG.Model, T = L.terrain;
+    const mid = (T.leftEdge + T.rightEdge) / 2, side = a.x < mid ? -1 : 1;
+    const edge = Math.abs(a.x - T.leftEdge) <= 1.2 || Math.abs(a.x - T.rightEdge) <= 1.2;
+    let x = edge ? a.x + side * 1.1 : a.x, y = edge ? (side < 0 ? T.leftY : T.rightY) : (gy ? gy(a.x) : T.floorY);
+    const spec = a.tree && typeof a.tree === 'object' ? a.tree : {};
+    if (spec.baseX !== undefined) x = spec.baseX;
+    if (spec.baseY !== undefined) y = spec.baseY;
+    if (Mo && typeof Mo.treeBase === 'function') {
+      try { const b = Mo.treeBase(L, i); if (b && isFinite(b.x) && isFinite(b.y)) { x = b.x; y = b.y; } } catch (e) { /* keep the defaults */ }
+    }
+    return { x, y, side, edge };
+  }
+  /** where the trunk is drawn from: the root base, sunk 0.3 m into the bank */
+  function treeBase(L, i, gy) { const b = treeBaseFor(L, i, gy); return { x: b.x, y: b.y - 0.3 }; }
+  const rot = (x, y, c, s) => ({ x: x * c - y * s, y: x * s + y * c });
+  /** the tree as one rigid body turning about its base: the rest pose, or the live one from sim.trees (ent) */
+  function treePose(L, a, i, gy, ent) {
+    const tb = treeBaseFor(L, i, gy), B = { x: tb.x, y: tb.y - 0.3 };
+    const v0x = a.x - B.x, v0y = a.y - B.y, len0 = Math.hypot(v0x, v0y) || 1, ux = v0x / len0, uy = v0y / len0;
+    const limb = tb.edge && Math.abs(a.x - tb.x) <= 1.3; // an edge tree's limb reaches over the gap edge to the anchor
+    const top0 = limb ? { x: tb.x, y: a.y + 1.6 } : { x: a.x + ux * 1.6, y: a.y + uy * 1.6 };
+    const limb0 = limb ? { x: tb.x, y: a.y - 0.9 } : null;
+    let delta = 0, s = 1, J = { x: a.x, y: a.y };
+    if (ent) {
+      J = { x: ent.x, y: ent.y };
+      delta = Math.atan2(J.y - B.y, J.x - B.x) - Math.atan2(v0y, v0x);
+      if (delta > Math.PI) delta -= TAU; else if (delta < -Math.PI) delta += TAU;
+      s = clamp(Math.hypot(J.x - B.x, J.y - B.y) / len0, 0.5, 1.5);
+    }
+    const c = Math.cos(delta) * s, sn = Math.sin(delta) * s;
+    const M = (p) => { const q = rot(p.x - B.x, p.y - B.y, c, sn); return { x: B.x + q.x, y: B.y + q.y }; };
+    return { B, tb, limb, top0, limb0, top: M(top0), J, delta, rest: Math.atan2(top0.y - B.y, top0.x - B.x), ratio: ent ? ent.ratio || 0 : 0, up: !!(ent && ent.uprooted), live: !!ent };
+  }
+  function stressOn(r) { const st = r._jst; return !!st && st.mode !== 'edit' && !!(st.peakView || (st.mode === 'results' && st.peakView !== false) || st.showStress !== false); }
+  const SOIL = '#4a3524', SOIL_LIT = '#6b4a2e';
+  function drawTreeAnchor(r, ctx, a, L, T, i, ent, J) {
+    const P = treePose(L, a, i, (x) => r.groundY(x), ent), B = P.B, top = P.top, top0 = P.top0;
+    const hx = top.x - B.x, hy = top.y - B.y, h = Math.hypot(hx, hy), h0 = Math.hypot(top0.x - B.x, top0.y - B.y);
+    if (!(h0 > 1)) return;
+    const side = a.x < (T.le + T.re) / 2 ? -1 : 1;
+    const bw = 1.5, tw = 0.48, d = P.delta;
+    // trunk: a quadratic from the base to the top. Its tangent at the roots stays on the rest direction, so it bows with the pull
+    const dir0 = { x: Math.cos(P.rest), y: Math.sin(P.rest) };
+    const bow = P.live && !P.up;
+    const C = bow ? { x: B.x + dir0.x * h * 0.55, y: B.y + dir0.y * h * 0.55 } : { x: B.x + hx / 2, y: B.y + hy / 2 };
+    const at = (t) => { const u = 1 - t; return { x: u * u * B.x + 2 * u * t * C.x + t * t * top.x, y: u * u * B.y + 2 * u * t * C.y + t * t * top.y }; };
+    const tan = (t) => { const u = 1 - t, x = 2 * u * (C.x - B.x) + 2 * t * (top.x - C.x), y = 2 * u * (C.y - B.y) + 2 * t * (top.y - C.y), l = Math.hypot(x, y) || 1; return { x: x / l, y: y / l }; };
+    const N = 18, mid = [], lft = [], rgt = [];
+    for (let k = 0; k <= N; k++) {
+      const t = k / N, p = at(t), g = tan(t), w = tw - 0.07 * t + (bw - tw) * Math.pow(Math.max(0, 1 - t / 0.3), 2.2);
+      mid.push(p); lft.push({ x: p.x - g.y * w, y: p.y + g.x * w }); rgt.push({ x: p.x + g.y * w, y: p.y - g.x * w });
+    }
     ctx.save();
-    ctx.fillStyle = '#4a3524';
-    ctx.beginPath();
-    ctx.moveTo(cx - bw, base); ctx.quadraticCurveTo(cx - tw * 1.3, base + h * 0.1, cx - tw, base + h * 0.3); ctx.lineTo(cx - tw * 0.85, top);
-    ctx.lineTo(cx + tw * 0.85, top); ctx.lineTo(cx + tw, base + h * 0.3); ctx.quadraticCurveTo(cx + tw * 1.3, base + h * 0.1, cx + bw, base); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#6a4a30';
-    ctx.beginPath(); ctx.moveTo(cx + tw * 0.1, base + 0.2); ctx.lineTo(cx + tw * 0.15, top); ctx.lineTo(cx + tw * 0.85, top); ctx.lineTo(cx + tw, base + h * 0.3); ctx.quadraticCurveTo(cx + tw * 1.3, base + h * 0.1, cx + bw * 0.7, base); ctx.closePath(); ctx.fill();
-    // bark furrows
+    // an uprooted tree: the pit it left, and its root plate turning with the trunk (soil, strands)
+    if (P.up) {
+      JungleFx.treeUp++;
+      const gy0 = P.tb.y;
+      ctx.fillStyle = '#1c120a'; ctx.beginPath(); ctx.ellipse(B.x, gy0 + 0.05, 1.5, 0.3, 0, 0, TAU); ctx.fill();
+      ctx.save();
+      ctx.translate(B.x, B.y); ctx.rotate(Math.atan2(hy, hx) - Math.PI / 2);
+      ctx.strokeStyle = '#3a281a'; ctx.lineCap = 'round';
+      for (let k = 0; k < 7; k++) {
+        const o = (k - 3) / 3 * 1.35, hh = hash2(k, a.x * 10 | 0, 9);
+        ctx.lineWidth = 0.1 + hh * 0.08;
+        ctx.beginPath(); ctx.moveTo(o * 0.7, 0.05); ctx.quadraticCurveTo(o * 1.2, -0.5 - hh * 0.3, o * 1.1 + (hh - 0.5) * 0.5, -0.95 - hh * 0.5); ctx.stroke();
+      }
+      ctx.fillStyle = SOIL; ctx.beginPath(); ctx.ellipse(0, 0.05, 1.6, 0.5, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#2e1f12'; ctx.beginPath(); ctx.ellipse(0, -0.02, 1.2, 0.32, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = SOIL_LIT; ctx.beginPath(); ctx.ellipse(-0.4, 0.2, 0.5, 0.14, 0, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+    // stress view: the root flare glows with the root load, red and pulsing from 0.85
+    if (P.live && !P.up && stressOn(r) && Renderer.stressColor) {
+      const rr = clamp(P.ratio, 0, 1.2), hot = rr >= 0.85, a0 = 0.16 + 0.34 * Math.min(1, rr) + (hot ? 0.2 * (0.5 + 0.5 * Math.sin(r.time * 9)) : 0);
+      const gr = ctx.createRadialGradient(B.x, B.y + 0.5, 0.1, B.x, B.y + 0.5, 2.0);
+      gr.addColorStop(0, Renderer.stressColor(Math.min(1, rr), a0)); gr.addColorStop(1, Renderer.stressColor(Math.min(1, rr), 0));
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(B.x, B.y + 0.5, 2.0, 0, TAU); ctx.fill();
+    }
+    ctx.fillStyle = SOIL;
+    ctx.beginPath(); ctx.moveTo(lft[0].x, lft[0].y);
+    for (let k = 1; k <= N; k++) ctx.lineTo(lft[k].x, lft[k].y);
+    for (let k = N; k >= 0; k--) ctx.lineTo(rgt[k].x, rgt[k].y);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = SOIL_LIT; // the lit side
+    ctx.beginPath(); ctx.moveTo(mid[0].x, mid[0].y);
+    for (let k = 1; k <= N; k++) ctx.lineTo(mid[k].x, mid[k].y);
+    for (let k = N; k >= 0; k--) ctx.lineTo(rgt[k].x, rgt[k].y);
+    ctx.closePath(); ctx.fill();
+    // bark furrows, along the curve
     ctx.strokeStyle = 'rgba(30,18,8,0.45)'; ctx.lineWidth = 0.05; ctx.lineCap = 'round';
     for (let k = 0; k < 5; k++) {
-      const fx = cx + (k - 2) * tw * 0.38;
-      ctx.beginPath(); ctx.moveTo(fx, base + 0.5 + hash2(k, a.x * 10 | 0, 1) * 1.5); ctx.lineTo(fx + (k - 2) * 0.03, top - 0.3 - hash2(k, a.x * 10 | 0, 2) * 2); ctx.stroke();
+      const off = (k - 2) * tw * 0.38, t0 = (0.5 + hash2(k, a.x * 10 | 0, 1) * 1.5) / h0, t1 = 1 - (0.3 + hash2(k, a.x * 10 | 0, 2) * 2) / h0;
+      ctx.beginPath();
+      for (let m = 0; m <= 6; m++) { const t = t0 + (t1 - t0) * m / 6, p = at(t), g = tan(t), o = off * (1 - 0.15 * t); m ? ctx.lineTo(p.x + g.y * o, p.y - g.x * o) : ctx.moveTo(p.x + g.y * o, p.y - g.x * o); }
+      ctx.stroke();
     }
-    // moss on the roots
-    ctx.fillStyle = 'rgba(80,140,50,0.55)'; blob(ctx, cx - bw * 0.4, base + 0.4, 0.7, 0.3);
-    // the limb that carries the anchor
-    if (edge) {
-      ctx.strokeStyle = '#4a3524'; ctx.lineWidth = 0.4; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(cx, a.y - 0.9); ctx.quadraticCurveTo(a.x + side * 0.3, a.y - 0.6, a.x, a.y - 0.05); ctx.stroke();
+    ctx.fillStyle = 'rgba(80,140,50,0.55)'; blob(ctx, B.x - bw * 0.4, B.y + 0.4, 0.7, 0.3); // moss on the roots
+    // roots heave on the side away from the lean as the load nears what they hold
+    if (P.live && !P.up && P.ratio > 0.3) {
+      const hv = Math.min(1.2, (P.ratio - 0.3) / 0.7), ls = d < 0 ? -1 : 1, hxm = B.x + ls * 0.95, gy0 = P.tb.y;
+      ctx.fillStyle = SOIL; ctx.beginPath(); ctx.ellipse(hxm, gy0 + 0.1 + 0.2 * hv, 0.85, 0.12 + 0.28 * hv, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = SOIL_LIT; ctx.beginPath(); ctx.ellipse(hxm - ls * 0.15, gy0 + 0.2 + 0.28 * hv, 0.55, 0.08 + 0.12 * hv, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#3a281a'; ctx.lineWidth = 0.11; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(B.x + ls * 0.5, B.y + 0.35); ctx.quadraticCurveTo(B.x + ls * 1.1, B.y + 0.4 + 0.3 * hv, B.x + ls * 1.7, B.y + 0.25 + 0.35 * hv); ctx.stroke();
+      ctx.strokeStyle = 'rgba(20,12,6,0.6)'; ctx.lineWidth = 0.05;
+      ctx.beginPath(); ctx.moveTo(B.x + ls * 1.9, gy0 + 0.08); ctx.lineTo(B.x + ls * 2.25, gy0 - 0.12); ctx.moveTo(B.x + ls * 2.1, gy0 + 0.05); ctx.lineTo(B.x + ls * 2.6, gy0 + 0.0); ctx.stroke();
     }
-    // crown
-    const cr = Math.min(3.4, 1.6 + h * 0.14), cy = top + cr * 0.35;
-    ctx.fillStyle = '#1f5a30'; blob(ctx, cx, cy, cr * 1.2, cr * 0.75);
-    ctx.fillStyle = '#2f7a3a'; blob(ctx, cx - cr * 0.4, cy + cr * 0.3, cr * 0.9, cr * 0.6);
-    ctx.fillStyle = '#3f9a44'; blob(ctx, cx + cr * 0.35, cy + cr * 0.45, cr * 0.65, cr * 0.42);
-    ctx.fillStyle = '#5fb04e'; blob(ctx, cx - cr * 0.05, cy + cr * 0.68, cr * 0.4, cr * 0.24);
+    // the limb that carries the anchor: from the trunk to the joint (live)
+    if (P.limb) {
+      const tl = clamp(Math.hypot(P.limb0.x - B.x, P.limb0.y - B.y) / h0, 0, 1), q = at(tl), c2 = Math.cos(d), s2 = Math.sin(d);
+      const o = rot(side * 0.3, -0.6, c2, s2), e = rot(0, -0.05, c2, s2);
+      ctx.strokeStyle = SOIL; ctx.lineWidth = 0.4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.quadraticCurveTo(P.J.x + o.x, P.J.y + o.y, P.J.x + e.x, P.J.y + e.y); ctx.stroke();
+    }
+    // crown, turning with the top
+    const cr = Math.min(3.4, 1.6 + h0 * 0.14), cy = cr * 0.35;
+    ctx.translate(top.x, top.y); ctx.rotate(P.up ? Math.atan2(hy, hx) - P.rest : d);
+    ctx.fillStyle = '#1f5a30'; blob(ctx, 0, cy, cr * 1.2, cr * 0.75);
+    ctx.fillStyle = '#2f7a3a'; blob(ctx, -cr * 0.4, cy + cr * 0.3, cr * 0.9, cr * 0.6);
+    ctx.fillStyle = '#3f9a44'; blob(ctx, cr * 0.35, cy + cr * 0.45, cr * 0.65, cr * 0.42);
+    ctx.fillStyle = '#5fb04e'; blob(ctx, -cr * 0.05, cy + cr * 0.68, cr * 0.4, cr * 0.24);
     ctx.restore();
+    if (ent) JungleFx.treesBent++;
+    // the toppling kicks up dust and clods, once
+    if (P.up && J && !J.up[i] && r.effects) {
+      J.up[i] = 1;
+      safe(() => { r.effects.derailDust(B.x, P.tb.y + 0.3, 14, 1.8); r.effects.dust(B.x, P.tb.y + 0.5, 12, 'rgba(90,64,40,1)', 1.5); });
+    }
   }
   function drawWaterfall(r, ctx, wf, L, T, t, v, z) {
     const wy = wetLevel(L) ? L.terrain.waterY : r.groundY((wf.x0 + wf.x1) / 2);
@@ -907,14 +1233,20 @@
     // waterfall
     if (cfg.waterfall) safe(() => drawWaterfall(r, ctx, cfg.waterfall, L, T, t, v, z));
     // tree and ruin anchors
-    for (const a of L.anchors || []) {
-      if (a.deco === 'tree') safe(() => drawTreeAnchor(r, ctx, a, L, T));
+    const live = liveTrees(r);
+    if (J && !J.up) J.up = {};
+    (L.anchors || []).forEach((a, i) => {
+      if (a.deco === 'tree') safe(() => drawTreeAnchor(r, ctx, a, L, T, i, live && live[i], J));
       else if (a.deco === 'ruin') safe(() => pillar(r, ctx, a.x, r.groundY(a.x) - 0.2, a.y, 2.0));
-    }
+    });
     // hanging vines
     safe(() => drawVines(r, ctx, L, T, t, v));
     // animals on perches
     const spots = perchSpots(r, L, T);
+    for (const sp of spots) { // perches on a bending tree move with its joint
+      const e = sp.ai !== undefined && live && live[sp.ai], an = e && L.anchors[sp.ai];
+      if (e) { sp.x += e.x - an.x; sp.y += e.y - an.y; }
+    }
     const parrot = spots[0], monkeys = spots.slice(1, 3);
     if (parrot) { branch(ctx, parrot.x, parrot.y, parrot.side ? -1 : 1, 1.6); spriteBox(r, ctx, 'parrot', parrot.x, parrot.y, 0.4); }
     monkeys.forEach((m, i) => { branch(ctx, m.x, m.y, m.side ? -1 : 1, 1.8); spriteBox(r, ctx, 'monkey', m.x, m.y, 0.8, { flip: !!m.side }); });
@@ -1022,6 +1354,7 @@
   }
 
   // ------------------------------------------------------------------ public API
-  const JungleFx = BG.JungleFx = { THEMES, TYPES, SPRITES: SPR, isJungle, cameo, lastMeeting: null, forceCameo: false, shown: {}, canoes: 0, hits: 0 };
+  const JungleFx = BG.JungleFx = { THEMES, TYPES, SPRITES: SPR, isJungle, cameo, lastMeeting: null, forceCameo: false, shown: {}, canoes: 0, hits: 0,
+    pierHits: 0, pierKinds: { trestle: 0, crib: 0, aframe: 0, pillar: 0 }, stakes: 0, treesBent: 0, treeUp: 0, treeBase, treePose, liveTrees };
   try { if (root.location && /[?&]livingstone=1\b/.test(root.location.search || '')) JungleFx.forceCameo = true; } catch (e) { /* no location */ }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -27,7 +27,7 @@ Monkeys, porters and small carts cross; canoes paddle underneath; Dr Livingstone
 | Item | Value |
 |---|---|
 | Chapter id / key | `jungle` |
-| Levels | 59–68 (10 levels, `tools/levels/level-59.json` … `level-68.json`), Roads campaign (no `campaign` field) |
+| Levels | 59–68 (10 levels, `tools/levels/level-59.json` … `level-68.json`), Roads campaign (no `campaign` field). **Extended to 59–70 by [docs/challenges/SPEC-CHALLENGES.md](../challenges/SPEC-CHALLENGES.md)** (69 Guy Ropes, 70 The Leaning Kapok; 70 is now the chapter finale, Dr Livingstone stays on 68), which also adds bending trees, ground stakes and timber piers. |
 | Kind | hidden branching bonus chapter, exactly like Anchorages: `BG.Storage.CAMPAIGNS.road.bonus` entry |
 | `unlockAfter` | **30** |
 | HUD chapter | `{ n: 9, key: 'jungle', from: 59, to: 68, theme: 'jungle', hidden: true }` in `CHAPTERS` (js/ui/hud.js) |

@@ -18,6 +18,7 @@ const NODE = [
   ['test-templates.js'],
   ['test-railinfo.js'],
   ['test-anchors.js'],
+  ['test-tree-anchors.js'], // flexible tree anchors + ground stakes: lean, uprooting, guy ropes, determinism (docs/challenges/SPEC-CHALLENGES.md §1)
   ['test-goals.js'],
   ['test-events.js'],
   ['test-generator.js', '--quick'],

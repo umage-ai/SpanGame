@@ -385,6 +385,84 @@
     return { left: li >= 0 ? 'a' + li : null, right: ri >= 0 ? 'a' + ri : null };
   }
 
+  // ------------------------------------------------------------------ tree anchors and ground stakes
+  // (docs/challenges/SPEC-CHALLENGES.md §1). `deco: 'tree'` alone is a look; `tree: true | {...}` makes the
+  // anchor a flexible tree (a trunk from its root base to the anchor joint on a soft root spring, solved in
+  // physics.js). `deco: 'stake'` is a plain fixed anchor drawn as a wooden peg.
+  const TREE_EDGE = 1.2;      // m: a tree this close to a gap edge stands on the bank ...
+  const TREE_BACK = 1.1;      // m: ... with its roots this far behind the anchor (its limb reaches over the edge)
+  const TREE_MIN_LEN = 1.0;   // m: a shorter trunk is degenerate and stays rigid
+  // deterministic atan2 (same as physics.js: only basic IEEE ops + sqrt)
+  function atanDet(z) {
+    let sgn = 1, inv = false;
+    if (z < 0) { z = -z; sgn = -1; }
+    if (z > 1) { z = 1 / z; inv = true; }
+    z = z / (1 + Math.sqrt(1 + z * z));
+    z = z / (1 + Math.sqrt(1 + z * z));
+    const z2 = z * z;
+    let a = 4 * z * (1 - z2 * (1 / 3 - z2 * (1 / 5 - z2 * (1 / 7 - z2 * (1 / 9 - z2 / 11)))));
+    if (inv) a = 1.5707963267948966 - a;
+    return sgn * a;
+  }
+  function atan2Det(y, x) {
+    if (x > 0) return atanDet(y / x);
+    if (x < 0) return y >= 0 ? atanDet(y / x) + 3.141592653589793 : atanDet(y / x) - 3.141592653589793;
+    return y > 0 ? 1.5707963267948966 : y < 0 ? -1.5707963267948966 : 0;
+  }
+  function anchorAt(level, i) { return ((level && level.anchors) || [])[i] || null; }
+  function anchorIdx(id) { return typeof id === 'string' && id[0] === 'a' && /^a\d+$/.test(id) ? +id.slice(1) : -1; }
+
+  /** Root base of any deco:'tree' anchor (rigid or flexible) -> {x, y, side, edge} or null. Edge tree (within
+   *  1.2 m of a gap edge): 1.1 m behind the anchor on that bank's surface, side +1 (left bank) / -1 (right);
+   *  mid-gap tree: under the anchor on the valley floor, side 0. anchors[i].tree.baseX / baseY override. */
+  function treeBase(level, i) {
+    const a = anchorAt(level, i);
+    return a && a.deco === 'tree' ? baseOf(level, a) : null;
+  }
+  function baseOf(level, a) {
+    const t = (level && level.terrain) || {};
+    const le = num(t.leftEdge, 0), re = num(t.rightEdge, 0);
+    let side = 0, x = a.x, y = floorY(level), edge = false;
+    if (Math.abs(a.x - le) <= TREE_EDGE && Math.abs(a.x - le) <= Math.abs(a.x - re)) { side = 1; edge = true; x = a.x - TREE_BACK; y = num(t.leftY, 0); }
+    else if (Math.abs(a.x - re) <= TREE_EDGE) { side = -1; edge = true; x = a.x + TREE_BACK; y = num(t.rightY, 0); }
+    const o = a.tree && typeof a.tree === 'object' ? a.tree : null;
+    if (o) { x = num(o.baseX, x); y = num(o.baseY, y); }
+    return { x, y, side, edge };
+  }
+  /** Flexible tree spec of anchor i (null unless anchors[i].tree is truthy and the trunk is >= 1 m long). */
+  function treeSpec(level, i) {
+    const a = anchorAt(level, i);
+    if (!a || !a.tree) return null;
+    const T = BG.TreeAnchor || {};
+    const o = typeof a.tree === 'object' ? a.tree : {};
+    const b = baseOf(level, a);
+    const dx = a.x - b.x, dy = a.y - b.y, length = hyp(dx, dy);
+    if (!(length >= TREE_MIN_LEN)) return null;
+    return {
+      i, id: 'a' + i, x: a.x, y: a.y, baseX: b.x, baseY: b.y, length, rest: atan2Det(-dx, dy),
+      stiffness: Math.max(1, num(o.stiffness, num(T.stiffness, 8e5))),
+      rootLimit: Math.max(1, num(o.rootLimit, num(T.rootLimit, 1.2e5))),
+      uprootTilt: Math.max(0.01, num(o.uprootTilt, num(T.uprootTilt, 0.25))),
+      topMass: Math.max(0, num(o.topMass, num(T.topMass, 80))),
+      side: b.side,
+    };
+  }
+  /** The flexible trees of a level, in anchor order. */
+  function treeAnchors(level) {
+    const out = [], n = ((level && level.anchors) || []).length;
+    for (let i = 0; i < n; i++) { const s = treeSpec(level, i); if (s) out.push(s); }
+    return out;
+  }
+  function isTreeAnchorId(level, id) { const a = anchorAt(level, anchorIdx(id)); return !!a && a.deco === 'tree'; }
+  function isStakeAnchorId(level, id) { const a = anchorAt(level, anchorIdx(id)); return !!a && a.deco === 'stake'; }
+  /** A plain anchor bolt: no deco, and not one of the two road ends. */
+  function isBoltAnchorId(level, id) {
+    const a = anchorAt(level, anchorIdx(id));
+    if (!a || a.deco) return false;
+    const ra = roadAnchors(level);
+    return id !== ra.left && id !== ra.right;
+  }
+
   /** Which deck kinds the level's traffic needs -> {road, rail}. No traffic counts as road. */
   function trafficKinds(level) {
     let road = false, rail = false;
@@ -644,5 +722,7 @@
     anchorInfo, inlandAnchors, isInlandAnchorId, anchorMounds, bankAt, bankY, pierZoneAt, landPierBank, pierBaseY,
     tallestVehicle, hasLandFeatures, roadEnvelope, inRoadway, beamInRoadway, landExtent,
     segmentHitsPoly, polyContains, ROADWAY_MSG, ROAD_MARGIN, INLAND_MIN, HILL_MIN,
+    // tree anchors and ground stakes (docs/challenges/SPEC-CHALLENGES.md §1)
+    treeSpec, treeBase, treeAnchors, isTreeAnchorId, isStakeAnchorId, isBoltAnchorId,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -35,6 +35,7 @@ npm run test:all       # both; run this before a pull request
 | `node tools/test-templates.js` | every template generates a valid design on synthetic and real levels, and none earns ★★★ on any level (`--no-sim` skips the simulation part, `--svg out.html` draws them) |
 | `node tools/test-railinfo.js` | the derailment explainer: every derail cause gets a deliberately bad design, and the explanation names it with numbers |
 | `node tools/test-anchors.js` | inland anchors, land pylons (guyed pylons stand, unguyed ones topple), the roadway envelope, and the Anchorages levels |
+| `node tools/test-tree-anchors.js` | flexible tree anchors and ground stakes: a static pull leans the tree by M/stiffness, an unguyed ox cart uproots it and a guyed one passes, determinism, and levels without trees run exactly as before |
 | `node tools/test-goals.js` | every shipped challenge badge still has a saved design that passes the level and earns exactly that badge |
 | `node tools/test-events.js [--full]` | wind and earthquake physics; levels without events simulate bit-identically to the engine without the feature (`--full` checks every road and rail design) |
 | `node tools/test-generator.js [--quick]` | 365 daily levels and 200 random seeds: well-formed, proven solvable, deterministic, plus difficulty distributions and timing |

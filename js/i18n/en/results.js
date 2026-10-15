@@ -24,6 +24,7 @@
     'results.stat.peakStress': 'Peak stress',
     'results.stat.time': 'Time',
     'results.stat.broken': 'Broken',
+    'results.stat.roots': 'Root load',
     'results.label.broke': 'BROKE',
 
     // ---- titles and explanations (BG.Game resultText)
@@ -37,6 +38,7 @@
     'results.title.offEdge': 'Off the edge!',
     'results.title.jumped': 'No jumping!',
     'results.title.stalled': 'Traffic stuck',
+    'results.title.uprooted': 'Uprooted!',
     'results.title.timeout': 'Out of time',
     'results.title.failed': 'Bridge failed',
     'results.pass.oneVehicle': 'The vehicle crossed safely.',
@@ -65,6 +67,8 @@
     'results.fail.gaps': 'Make sure the road reaches all the way across, without gaps or steep steps.',
     'results.fail.jumped': 'A vehicle flew across instead of driving. The road has to run continuously from bank to bank and carry the traffic all the way.',
     'results.fail.stalled': 'Every vehicle came to a stop on the bridge. Is the deck too steep, too bumpy, or sagging into a dip they cannot climb out of?',
+    'results.fail.uprooted': 'A tree was pulled over: the bridge pulled on it harder than its roots could hold. Spread the pull over more anchors, or balance it with members pulling the other way.',
+    'results.fail.uprootedStake': 'A tree was pulled over: the bridge pulled on it harder than its roots could hold. Guy it back with a rope to the ground stake behind it, or hang less from it.',
     'results.fail.timeout': 'Only {n} of {total} vehicles made it across in {time}. Is the deck too steep, or sagging so much that traffic gets stuck?',
     'results.fail.generic': 'Not every vehicle made it across. Strengthen the overloaded members and try again.',
     'results.why.topple': 'A land pylon toppled first: its footing could not hold the pull of its stays. Guy it back with backstays to an inland anchor behind it.',

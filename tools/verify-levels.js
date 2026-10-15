@@ -2,6 +2,7 @@
 // SPAN — verifies every level in BG.Levels against its designs in tools/solutions/:
 //   level-NN.json       reference: passes, peak stress <= 0.92, cost <= budget
 //   level-NN-best.json  best:      passes, peak stress <= 0.99, cost <= 70 % of budget (proves ★★★ is reachable)
+//   levels with flexible tree anchors: no tree uprooted, and the reference's peak root load (peakRoot) <= 0.92
 // Rail levels also gate the ride margin (sim.ride: worst kink / limit and worst grade / limit, the same
 // quantities the derail rule judges): reference <= 0.95, best <= 1.0; and the best design must pass with
 // the structure intact (no broken member), since ★★★ on a rail level requires "Structure held".
@@ -91,6 +92,12 @@ for (const level of levels) {
           if (r.status !== 'success') problems.push('not passing (' + (r.failReason || r.status) + ')');
           if (!(r.peakStress <= peakMax)) problems.push('peak ' + r.peakStress.toFixed(3) + ' > ' + peakMax);
           if (!r.budgetOk) problems.push('over budget');
+          // flexible tree anchors (docs/challenges/SPEC-CHALLENGES.md §1): no design may uproot a tree, and the
+          // reference keeps its roots below the same margin as its members
+          if (r.peakRoot != null) {
+            if (r.treesUprooted) problems.push(r.treesUprooted + ' tree(s) uprooted');
+            if (!best && !(r.peakRoot <= PEAK_MAX)) problems.push('root ' + r.peakRoot.toFixed(3) + ' > ' + PEAK_MAX);
+          }
           if (best && level.budget && r.cost > BEST_RATIO * level.budget + 1e-9) problems.push('cost ' + (r.cost / level.budget).toFixed(3) + ' of budget > ' + BEST_RATIO);
           const ride = r.sim && r.sim.ride;
           if (ride) {
@@ -126,7 +133,7 @@ for (const level of levels) {
       r ? r.wallMs + 'ms' : '-', problems.join('; '),
     ];
     console.log(row.map((v, i) => pad(v, cols[i][1], i >= 3 && i <= 11)).join(' '));
-    if (verbose && r) console.log('     ', JSON.stringify({ status: r.status, failReason: r.failReason, time: r.time }));
+    if (verbose && r) console.log('     ', JSON.stringify({ status: r.status, failReason: r.failReason, time: r.time }) + (r.peakRoot != null ? '  root ' + r.peakRoot.toFixed(3) : ''));
   }
 }
 console.log('-'.repeat(112));

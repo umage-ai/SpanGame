@@ -1,0 +1,31 @@
+{
+  "id": 70,
+  "name": "The Leaning Kapok",
+  "theme": "jungle",
+  "hint": "The old kapok on the near bank already leans out over the river, and the ox cart is coming. Hang the walkway from both trees, but guy them well: as the ox cart rolls across, it drags each tree in turn towards the river. A Bamboo truss under the deck spreads the weight of the cart.",
+  "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 36, "rightY": 0, "floorY": -18, "waterY": -10 },
+  "anchors": [
+    { "x": 0, "y": 0 },
+    { "x": 36, "y": 0 },
+    { "x": 0, "y": -5 },
+    { "x": 36, "y": -5 },
+    { "x": 0, "y": 12, "deco": "tree", "tree": { "baseX": -3, "baseY": 0, "stiffness": 1.1e6, "rootLimit": 8e4 } },
+    { "x": 36, "y": 8, "deco": "tree", "tree": { "stiffness": 8e5, "rootLimit": 5e4 } },
+    { "x": -6, "y": 0, "deco": "stake" },
+    { "x": 41, "y": 0, "deco": "stake" }
+  ],
+  "pierZones": [],
+  "maxPiers": 0,
+  "noBuild": [],
+  "buildArea": { "x0": 0, "x1": 36, "y0": -10, "y1": 16 },
+  "materials": [ "walkway", "bamboo", "liana", "rope", "wood" ],
+  "budget": 4900,
+  "traffic": [
+    { "type": "walker", "count": 4, "interval": 1.5 },
+    { "type": "handcart", "count": 2, "interval": 3 },
+    { "type": "oxcart", "count": 1, "interval": 4 }
+  ],
+  "timeLimit": 100,
+  "templates": true,
+  "jungle": { "canoes": 1 }
+}

@@ -9,6 +9,7 @@
   const DERAIL_SLOWMO = 0.5;   // s (real time) of slow motion when a train first derails
   const DERAIL_SLOW = 0.08;    // sim speed during it
   const DERAIL_EASE = 0.35;    // s to ease back to the chosen speed
+  const UPROOT_LEAD = 1.5;     // s: a member breaking this close before a tree uproots broke because the tree leaned
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function nowMs() { return root.performance ? performance.now() : Date.now(); }
@@ -194,6 +195,10 @@
           kink: I() ? I().num(c.lim.maxKinkDeg) : c.lim.maxKinkDeg }) + ' ' +
           t(c.broken > 0 ? 'results.fail.derailedBroken' : 'results.fail.derailedSag');
       }
+    } else if (c.reason === 'uprooted') {
+      // a flexible tree anchor was pulled out of the ground (docs/challenges/SPEC-CHALLENGES.md 1.6)
+      title = t('results.title.uprooted');
+      text = t(c.hasStake ? 'results.fail.uprootedStake' : 'results.fail.uprooted');
     } else if (c.reason === 'vehicle_fell') {
       const train = !!(c.fell && isTrain(c.fell));
       const what = (c.fell ? simVehicleName(c.fell) : t('results.word.vehicle')).toLowerCase();
@@ -213,11 +218,12 @@
       title = t('results.title.failed');
       text = t('results.fail.generic');
     }
-    // what gave way first, and why (teaches reading the stress map)
+    // what gave way first, and why (teaches reading the stress map). On an uprooted run a member that broke less than
+    // UPROOT_LEAD before the roots let go broke because the tree leaned, so only an earlier break is explained.
     const fb = c.firstBreak, ft = c.firstTopple;
     if (!c.passed && !c.simOk && ft && (!fb || ft.time <= fb.time)) {
       text += ' ' + t('results.why.topple');
-    } else if (!c.passed && !c.simOk && fb) {
+    } else if (!c.passed && !c.simOk && fb && !(c.reason === 'uprooted' && c.firstUproot && fb.time > c.firstUproot.time - UPROOT_LEAD)) {
       const name = matName(fb.m).toLowerCase();
       const kN = Math.round(Math.abs(fb.force || 0) / 1000);
       const p = { name, kN: I() ? I().num(kN) : kN };
@@ -884,6 +890,10 @@
           break;
         case 'vehicle_finish': if (withAudio) sfx('finish'); break;
         case 'vehicle_fall': shake(0.35); break;
+        case 'tree_uproot': // a flexible tree anchor tears out of the ground (SPEC-CHALLENGES 1.6)
+          if (withAudio) sfx('break', { material: 'wood', pan });
+          shake(0.6);
+          break;
         case 'pylon_fail': // a land pylon topples (SPEC §17)
           if (withAudio) sfx('break', { material: 'masonry', pan });
           shake(0.7);
@@ -1116,6 +1126,8 @@
         lim: Object.assign({}, BG.RailRules || { maxGrade: 0.06, maxKinkDeg: 4 }, sim.railRules || lv.rail || {}),
         derailed, fell, water: !!(lv.terrain && lv.terrain.waterY != null), timeLimit: lv.timeLimit || Math.round(sim.time),
         info: this._derailFx && this._derailFx.info, firstBreak: fb || null, firstTopple: ft || null,
+        firstUproot: sum.firstUproot || sim.firstUproot || null,
+        hasStake: (lv.anchors || []).some(a => a && a.deco === 'stake'),
       };
       const txt = resultText(ctx);
       const title = txt.title, text = txt.text;
@@ -1144,7 +1156,7 @@
       const campaign = campaignOf(lv);
       const res = {
         passed, stars, cost, budget, title, reasonText: text, simOk, reason,
-        time: sum.time != null ? sum.time : sim.time, peakStress: peak, vehiclesFinished: vf, vehiclesTotal: vt,
+        time: sum.time != null ? sum.time : sim.time, peakStress: peak, peakRoot: sum.peakRoot != null ? sum.peakRoot : null, vehiclesFinished: vf, vehiclesTotal: vt,
         brokenBeams: broken, hasNext: !!next, improved: !!rec.improved, best: rec.entry, firstBreak: fb || null,
         finale: passed && !!finaleOf(lv), finaleKind: passed ? finaleOf(lv) : null, campaign,
         railUnlocked: opened.includes('rail'), campaignsOpened: opened, skipUnlocked: skipOpened.map(levelId),
@@ -1214,6 +1226,44 @@
     toast(msg, kind) { hudCall('toast', msg, kind); },
 
     // ---------------------------------------------------------------- hover tooltip data
+    // flexible tree anchors + ground stakes (docs/challenges/SPEC-CHALLENGES.md 1.7)
+    _treeTip(sim, w, p, beamDist) {
+      const trees = sim.trees;
+      if (!trees || !trees.length) return null;
+      let best = null, bd = Math.min(0.8, beamDist);
+      trees.forEach(tr => {
+        if (!tr) return;
+        const dd = distToSeg(w.x, w.y, tr.baseX, tr.baseY, tr.x, tr.y);
+        if (dd < bd) { bd = dd; best = tr; }
+      });
+      if (!best) return null;
+      const lean = Math.abs(best.lean || 0) * 180 / Math.PI, ratio = +best.ratio || 0, peak = +best.peak || 0;
+      const lv = (r, hi) => r >= hi ? 'bad' : r >= hi * 0.7 ? 'warn' : 'good';
+      const rows = [
+        [t('features.jungle.tree.lean'), t('features.jungle.tree.deg', { n: I() ? I().num(lean, 1) : lean.toFixed(1) })],
+        [t('features.jungle.tree.roots'), pct(ratio), lv(ratio, 1)],
+        [t('features.jungle.tree.peak'), pct(peak), lv(peak, 1)],
+      ];
+      if (best.uprooted) rows.push([t('features.jungle.tree.name'), t('features.jungle.tree.uprooted'), 'bad']);
+      return { x: p.x, y: p.y, title: t('features.jungle.tree.name'), color: '#5b8a3c', rows, stress: ratio, peak };
+    },
+    _treeEditTip(p) {
+      const lv = this.level, r = this.renderer;
+      if (!lv || !r || !r.screenToWorld || !(lv.anchors || []).some(a => a && (a.deco === 'stake' || (a.deco === 'tree' && a.tree)))) return null;
+      const rect = this.canvas.getBoundingClientRect();
+      const w = safe(() => r.screenToWorld(p.x - rect.left, p.y - rect.top), null);
+      if (!w) return null;
+      let best = null, bd = 0.9;
+      lv.anchors.forEach(a => {
+        if (!a || !(a.deco === 'stake' || (a.deco === 'tree' && a.tree))) return;
+        const dd = Math.hypot(w.x - a.x, w.y - a.y);
+        if (dd < bd) { bd = dd; best = a; }
+      });
+      if (!best) return null;
+      const stake = best.deco === 'stake';
+      return { x: p.x, y: p.y, title: t(stake ? 'features.jungle.stake.name' : 'features.jungle.tree.name'), color: stake ? '#9a7040' : '#5b8a3c',
+        rows: [], note: t(stake ? 'features.jungle.stake.editTip' : 'features.jungle.tree.editTip') };
+    },
     getHoverInfo() {
       const p = this.pointer;
       if (!p.inside || !this.level) return null;
@@ -1245,7 +1295,7 @@
             });
           }
         }
-        if (!beam) return null;
+        if (!beam) return this._treeEditTip(p);
         const m = materialDef(beam.m);
         const len = beamLength(this.level, d, beam);
         const rows = [[t('editor.tip.length'), t('editor.tip.lengthOf', { len: fmtLen(len), max: m.maxLength ? (I() ? I().meters(m.maxLength) : m.maxLength + ' m') : '?' })], [t('editor.tip.cost'), money(len * (m.costPerMeter || 0))]];
@@ -1275,6 +1325,8 @@
           const dd = distToSeg(w.x, w.y, A.x, A.y, B.x, B.y);
           if (dd < bd) { bd = dd; best = i; }
         }
+        const tt = this._treeTip(sim, w, p, best < 0 ? thr : bd, zoom);
+        if (tt) return tt;
         if (best < 0) return null;
         const b = sim.beams[best];
         const m = b.material || materialDef(b.m);

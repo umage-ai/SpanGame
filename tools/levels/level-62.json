@@ -2,22 +2,24 @@
   "id": 62,
   "name": "Canoe Crossing",
   "theme": "jungle",
-  "hint": "Fishermen paddle their canoes down the middle of the river, so nothing may stand in the channel. Carry the walkway over it: hang it from the trees, or spring a Bamboo arch from the cliff bolts.",
+  "hint": "Fishermen paddle their canoes down the middle of the river, so nothing may stand in the channel. Carry the walkway over it: hang it from the trees and guy them back to the stakes behind them, or spring a Bamboo arch from the cliff bolts.",
   "terrain": { "leftEdge": 0, "leftY": 0, "rightEdge": 32, "rightY": 0, "floorY": -14, "waterY": -6 },
   "anchors": [
     { "x": 0, "y": 0 },
     { "x": 32, "y": 0 },
     { "x": 0, "y": -4 },
     { "x": 32, "y": -4 },
-    { "x": 0, "y": 8, "deco": "tree" },
-    { "x": 32, "y": 8, "deco": "tree" }
+    { "x": 0, "y": 8, "deco": "tree", "tree": {} },
+    { "x": 32, "y": 8, "deco": "tree", "tree": {} },
+    { "x": -5, "y": 0, "deco": "stake" },
+    { "x": 37, "y": 0, "deco": "stake" }
   ],
   "pierZones": [],
   "maxPiers": 0,
   "noBuild": [ { "x0": 9, "x1": 23, "y0": -6, "y1": -1.5 } ],
   "buildArea": { "x0": 0, "x1": 32, "y0": -6, "y1": 14 },
   "materials": [ "walkway", "bamboo", "liana", "rope" ],
-  "budget": 2250,
+  "budget": 2350,
   "traffic": [
     { "type": "walker", "count": 6, "interval": 1.5 },
     { "type": "handcart", "count": 2, "interval": 3 }
