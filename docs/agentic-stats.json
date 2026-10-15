@@ -1,12 +1,12 @@
 {
   "_comment": "How SPAN was built: counted from the Claude Code agent transcripts of the build session (one transcript per agent run). Maintained by hand by the lead agent; tools/gen-about.js copies it into js/features/about-data.js. Agent runs include ~15 that were cut off by usage limits and finished by later runs.",
-  "asOf": "2026-10-13",
-  "agents": 92,
-  "workflows": 14,
-  "toolCalls": 6723,
+  "asOf": "2026-10-15",
+  "agents": 101,
+  "workflows": 15,
+  "toolCalls": 7295,
   "models": {
-    "Claude Opus": 80,
-    "Claude Sonnet": 11,
+    "Claude Opus": 86,
+    "Claude Sonnet": 14,
     "Claude Haiku": 1
   },
   "milestones": {

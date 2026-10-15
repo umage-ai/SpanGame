@@ -4,12 +4,12 @@
   'use strict';
   const BG = (root.BG = root.BG || {});
   BG.AboutData = {
-    "version": "v1.3.1",
+    "version": "v1.4.0",
     "versionFrom": "tag",
-    "released": "2026-10-14",
+    "released": "2026-10-15",
     "firstCommit": "2026-10-02",
-    "asOf": "2026-10-14",
-    "commits": 54,
+    "asOf": "2026-10-15",
+    "commits": 57,
     "levels": 102,
     "campaigns": 3,
     "campaignLevels": {
@@ -25,23 +25,23 @@
     "browserSuites": 15,
     "languages": 2,
     "jsLines": {
-      "total": 38421,
-      "game": 28099,
+      "total": 38423,
+      "game": 28101,
       "tools": 10322
     },
     "jsFiles": 94,
     "repo": "https://github.com/umage-ai/SpanGame",
-    "releaseNotes": "https://github.com/umage-ai/SpanGame/releases/tag/v1.3.1",
+    "releaseNotes": "https://github.com/umage-ai/SpanGame/releases/tag/v1.4.0",
     "agentic": {
-      "agents": 92,
-      "workflows": 14,
-      "toolCalls": 6723,
+      "agents": 101,
+      "workflows": 15,
+      "toolCalls": 7295,
       "models": {
-        "Claude Opus": 80,
-        "Claude Sonnet": 11,
+        "Claude Opus": 86,
+        "Claude Sonnet": 14,
         "Claude Haiku": 1
       },
-      "asOf": "2026-10-13",
+      "asOf": "2026-10-15",
       "milestones": {
         "spec": "2026-10-02T13:52",
         "playable": "2026-10-02T14:46",
