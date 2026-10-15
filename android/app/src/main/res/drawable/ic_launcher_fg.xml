@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The adaptive icon shows the middle 72 of 108 dp: inset the maskable icon (generated into
+     res/drawable-nodpi by the appIcon task) by 18/108 so the whole icon is what the launcher shows. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_art"
+    android:inset="16.67%" />

@@ -198,6 +198,8 @@ Served over http(s), SPAN is an installable Progressive Web App:
 
 Opened from `file://` the game plays exactly the same, just without install and offline caching (browsers only run service workers on https and localhost).
 
+**Android app:** `npm run android:debug` builds an APK, and `npm run android:release` builds the Google Play bundle. The app is a thin WebView shell around the same game files, which are copied in on every build, so it always matches the web version. See [docs/NATIVE.md](docs/NATIVE.md). An iOS app built the same way is planned.
+
 ## Languages
 
 SPAN speaks **English** and **Dansk** (Danish): every menu, hint, level name, history card and result, with numbers, money and dates in the player's own format. A Danish browser starts in Danish; switch any time in **Settings → Language** (the screen re-renders at once, no reload), or add `?lang=da` / `?lang=en` to the URL for a single visit.

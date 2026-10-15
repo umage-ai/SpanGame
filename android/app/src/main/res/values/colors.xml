@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the game's theme-color (index.html) and the maskable icon's background -->
+    <color name="span_bg">#0D1424</color>
+    <color name="ic_launcher_bg">#101A30</color>
+</resources>

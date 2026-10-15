@@ -24,3 +24,12 @@ desktop.ini
 .env
 .env.*
 .chunkhound
+
+# android: Gradle output (the game files are bundled into android/app/build at build time) and signing keys
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.jks
+*.keystore
