@@ -342,9 +342,31 @@
     const bonus = sortChapters(CHAPTERS).filter(ch => ch.hidden && !hidden.includes(ch.from) && levelsList().some(l => l && l.id >= ch.from && l.id <= ch.to));
     return bonus.length ? t('hud.levels.subBonus', { sub, chapters: bonus.map(ch => ch.name).join(', ') }) : sub;
   }
-  // chapters in level order (bonus chapters are registered by different modules: Anchorages here, Forces of Nature
-  // by forces-fx.js)
-  function sortChapters(list) { return list.slice().sort((a, b) => a.from - b.from); }
+  // chapters in the order a player meets them: the main line by level, then the hidden bonus chapters in the order they
+  // open (Jungle after 30, Anchorages after 40, Forces of Nature after 50). Bonus chapters are registered by different
+  // modules: Anchorages and Jungle here, Forces of Nature by forces-fx.js.
+  function bonusDef(ch) {
+    const S = stor(), c = S && S.CAMPAIGNS && S.CAMPAIGNS[ch.campaign || 'road'];
+    return c && Array.isArray(c.bonus) ? c.bonus.find(b => b.id === ch.key) || null : null;
+  }
+  function opensAfter(ch) {
+    const b = bonusDef(ch);
+    if (b && b.unlockAfter != null) return b.unlockAfter;
+    const S = stor(), c = S && S.CAMPAIGNS && S.CAMPAIGNS[ch.campaign || 'road'];
+    return c && c.last != null ? c.last : ch.from; // Forces of Nature continue the main line after its last level
+  }
+  function sortChapters(list) {
+    const key = ch => ch.hidden ? [1, opensAfter(ch), ch.from] : [0, ch.from, 0];
+    return list.slice().sort((a, b) => { const x = key(a), y = key(b); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; });
+  }
+  // a chapter's level ids in play order (Jungle plays its tree levels before the Livingstone finale)
+  function chapterIds(ch) {
+    const S = stor(), b = bonusDef(ch);
+    if (b && S && S.bonusIds) { try { return S.bonusIds(b); } catch (e) { /* */ } }
+    const ids = [];
+    for (let n = ch.from; n <= ch.to; n++) ids.push(n);
+    return ids;
+  }
   function chaptersFor(campaign) { const c = campaignUi(campaign); return c.chapters ? sortChapters(c.chapters()) : []; }
   function campaignOpen(campaign) {
     const S = stor();
@@ -368,13 +390,27 @@
     if (campaign === 'road') r.max = Math.max(0, r.max - 3 * hiddenLevelIds().length);
     return r;
   }
-  // what the player sees as the level number: the real id everywhere (1-50 on the Roads,
-  // 101-120 on the Iron Road), so tiles, chapter headers and the HUD all agree
+  // what the player sees as the level number (BG.Storage.levelNumber): the main Roads 1-50, every other part of the
+  // game counts from 1 (each Roads bonus chapter, the Iron Road 1-20, Famous Bridges 1-12), so tiles, chapter headers,
+  // the HUD and lock texts all agree. Ids never change: saves are keyed by them.
   function displayNum(level) {
     const id = levelId(level);
-    return id == null ? '?' : id;
+    if (id == null) return '?';
+    const S = stor();
+    try { const n = S && S.levelNumber ? S.levelNumber(levelsList(), level) : null; if (n != null) return n; } catch (e) { /* */ }
+    return id;
   }
-  function levelLabel(level) { return t('core.level', { n: displayNum(level) }); }
+  // "Level 12" on the main Roads; elsewhere the part's name goes first, so a number never means two levels:
+  // "Jungle 3", "Iron Road 7"
+  function levelLabel(level) {
+    const n = displayNum(level);
+    const camp = campaignOf(level);
+    const id = levelId(level);
+    const ch = camp === 'road' ? CHAPTERS.find(c => c.hidden && id >= c.from && id <= c.to) : null;
+    if (ch) return t('core.levelIn', { name: ch.name, n });
+    if (camp !== 'road') return t('core.levelIn', { name: campaignUi(camp).name, n });
+    return t('core.level', { n });
+  }
   // the short name a campaign uses for one of its levels (title Continue / Resume, history): famous bridges by name
   function shortLabel(level) {
     const cu = campaignUi(campaignOf(level));
@@ -777,12 +813,12 @@
         const th = theme(ch.theme);
         let chStars = 0, chMax = 0, anyOpen = false;
         const tiles = [];
-        for (let n = ch.from; n <= ch.to; n++) {
+        chapterIds(ch).forEach((n, i) => {
           const lv = levelForSlot(n);
-          const num = n;
+          const num = lv ? displayNum(lv) : (ch.hidden ? i + 1 : n);
           if (!lv) {
             tiles.push(`<div class="tile soon ${cu.cls || ''}" data-id="${n}" style="--acc:${th.accent}"><div class="tile-art soon-art"><span>${num}</span></div><div class="tile-body"><div class="tile-name">${esc(t('core.comingSoon'))}</div><div class="tile-stars dim">${starSvg()}${starSvg()}${starSvg()}</div></div></div>`);
-            continue;
+            return;
           }
           const id = levelId(lv);
           const isOpen = unlocked(id);
@@ -800,11 +836,12 @@
               <div class="tile-body"><div class="tile-name">${esc(lvName(lv) || levelLabel(lv))}</div>
               <div class="tile-stars">${[0, 1, 2].map(i => starSvg(i < st ? 'on' : '')).join('')}</div></div>
             </button>`);
-        }
+        });
+        const ids = chapterIds(ch), numOf = id => { const lv = levelForSlot(id); return lv ? displayNum(lv) : id; };
         const sec = h(`<section class="chapter ${anyOpen ? '' : 'ch-locked'} ${camp === 'rail' ? 'ch-rail' : ''}" style="--acc:${th.accent};--sky0:${th.sky[0]};--sky1:${th.sky[1]}">
             <div class="ch-head">
-              <div class="ch-num">${ch.n}</div>
-              <div class="ch-text"><h3>${esc(ch.name)}</h3><p>${esc(t('hud.levels.chapterLine', { from: ch.from, to: ch.to, desc: ch.desc }))}</p></div>
+              <div class="ch-num${ch.hidden ? ' ch-bonus' : ''}"${ch.hidden ? ' title="' + esc(t('hud.levels.bonusTip')) + '"' : ''}>${ch.hidden ? starSvg('on') : ch.n}</div>
+              <div class="ch-text"><h3>${esc(ch.name)}</h3><p>${esc(t('hud.levels.chapterLine', { from: numOf(ids[0]), to: numOf(ids[ids.length - 1]), desc: ch.desc }))}</p></div>
               <div class="ch-stars">${chMax ? starSvg('on') + '<b>' + chStars + '</b>/' + chMax : '<span class="soon-tag">' + esc(t('core.comingSoon')) + '</span>'}</div>
               ${unlockInfoBtn(camp)}
             </div>

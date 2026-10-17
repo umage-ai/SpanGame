@@ -1183,3 +1183,17 @@ The Android app (`android/`, later an iOS app built with xtool) wraps the shippe
 - the Android origin `https://appassets.androidplatform.net/assets/www/` is fixed forever, because `localStorage` saves live on it.
 
 Details, builds, signing and the iOS plan: [docs/NATIVE.md](docs/NATIVE.md). Tests: `tools/test-native.js`.
+
+## 23. Level numbers players see (fix/level-numbering)
+
+Ids are permanent (saves, designs, history and badges are keyed by them). The number on tiles, chapter headers, the level badge, lock texts and toasts comes from `BG.Storage.levelNumber(levels, level)`:
+
+- the main Roads show their id, 1–50;
+- each Roads bonus chapter counts 1..n in play order: Forces of Nature 1–3, Anchorages 1–5, Jungle 1–12;
+- every other campaign counts 1..n in id order (stubs included): the Iron Road 1–20, Famous Bridges 1–12.
+
+Elsewhere in the UI, `BG.Hud.levelLabel` puts the part's name first ("Jungle 3", "Iron Road 7"), so one number never means two levels. On the level select, bonus chapters come after the main line in the order they open (Jungle after 30, Anchorages after 40, Forces of Nature after 50). They show a star instead of a chapter number.
+
+A bonus chapter can list its levels in `order` when play order differs from id order. The Jungle plays the tree levels 69 and 70 before its Livingstone finale 68, so its `last` (the chapter finale) is 68.
+
+The level-select header counts the open tab only: gold stars and teal challenge stars. The title screen shows the totals across all campaigns.

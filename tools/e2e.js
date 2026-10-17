@@ -58,11 +58,11 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
     ref40: t('hud.unlock.levelRef', { n: 40 }), gate20: t('hud.unlock.gate.road', { name: t('hud.unlock.levelRef', { n: 20 }) }), structure: t('results.rail.structure'),
     onRails: t('results.rail.onRails'), railFinale: t('results.finale.rail.banner'), forces: t('hud.chapter.forces.name'), allLevels: t('hud.camp.road.all'),
     rule: t('hud.unlock.rule.road'), skipped: t('hud.levels.skipped'), roadway: t('editor.reason.roadway'), anch, anchBanner: t('results.finale.anchorages.banner'),
-    anchToast: t('results.toast.bonus', { name: anch, from: 54, to: 58 }), why: ['results.why.bendRoad', 'results.why.bendTrack', 'results.why.compression', 'results.why.tension'].map(k => t(k)),
+    anchToast: t('results.toast.bonus', { name: anch, from: 1, to: 5 }), why: ['results.why.bendRoad', 'results.why.bendTrack', 'results.why.compression', 'results.why.tension'].map(k => t(k)),
     pierCount: t('hud.tool.pierCount'), kinkTitle: t('results.derail.kink.title'), famousOpen: t('results.toast.open.famous'),
     contPonte: t('hud.title.continueLevel', { level: 'Ponte Vecchio' }), skip3: t('results.toast.skip.road', { name: t('core.level', { n: 3 }) }), topple: t('results.why.topple'),
     jung: t('hud.chapter.jungle.name'), jungBanner: t('results.finale.jungle.banner'), ref30: t('hud.unlock.levelRef', { n: 30 }),
-    jungToast: t('results.toast.bonus.jungle', { name: t('hud.chapter.jungle.name'), from: 59, to: 70 }),
+    jungToast: t('results.toast.bonus.jungle', { name: t('hud.chapter.jungle.name'), from: 1, to: 12 }),
     jungSub: t('hud.chapter.jungle.name') + ' · ' + t('hud.level.gap', { gap: BG.i18n.meters(14, 0) }),
     anchSub: anch + ' · ' + t('hud.level.gap', { gap: BG.i18n.meters(36, 0) }) }; });
   // a dictionary template as a pattern: {params} match anything
@@ -647,8 +647,9 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
   ok('passing level 40 reveals the Anchorages (toast), opens 54 only; Next still leads to 41', r.res && r.res.passed && (op.opened || []).includes('anchorages') && op.toast.includes(X.anchToast) && op.open54 && !op.open55 && op.next, op);
   await page.evaluate(() => BG.Game.goLevelSelect()); await page.waitForTimeout(600);
   const ls2 = await page.evaluate(() => ({ chapters: Array.from(document.querySelectorAll('.chapter h3')).map(h => h.textContent), open: Array.from(document.querySelectorAll('.tile.open')).map(t => +t.dataset.id).filter(id => id >= 51), sub: (document.querySelector('[data-ref=lsSub]') || document.querySelector('#screen-levels .ls-sub') || {}).textContent || '' }));
-  // (seed 1..39 already completes level 30, so the Jungle (59-70) is revealed too and sorts last: 59 is open)
-  ok('level select: the Anchorages chapter (54 open) and the Jungle (59 open) after Grand Spans; Forces of Nature still hidden', ls2.chapters[ls2.chapters.length - 1] === X.jung && ls2.chapters[ls2.chapters.length - 2] === X.anch && !ls2.chapters.includes(X.forces) && ls2.open.join() === '54,59', ls2);
+  // (seed 1..39 already completes level 30, so the Jungle (59-70) is revealed too; bonus chapters follow the main line
+  // in the order they open: the Jungle (after 30), then the Anchorages (after 40))
+  ok('level select: the Jungle (59 open) and then the Anchorages (54 open) after Grand Spans; Forces of Nature still hidden', ls2.chapters[ls2.chapters.length - 1] === X.anch && ls2.chapters[ls2.chapters.length - 2] === X.jung && !ls2.chapters.includes(X.forces) && ls2.open.slice().sort().join() === '54,59', ls2);
   await page.evaluate(() => BG.Hud.scrollToLevel(54)); await page.waitForTimeout(300);
   await shot('45-anchorages-chapter');
   await page.click('.tile[data-id="54"]'); await page.waitForTimeout(1000);
@@ -686,9 +687,10 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
   // ================================================================ the hidden Jungle chapter (59-70): opens after level 30
   const jun = await page.evaluate(() => {
     const G = BG.Game, S = BG.Storage, L = id => G.findLevel(id), nx = id => { const n = G.nextInCampaign(L(id)); return n ? n.id : null; };
-    return { next: [30, 59, 67, 68, 69, 70].map(nx), finale: S.finaleOf(L(70)), gate: S.isGate(L(70)), noFinale: [67, 68, 69].map(id => S.finaleOf(L(id))) };
+    return { next: [30, 59, 67, 69, 70, 68].map(nx), finale: S.finaleOf(L(68)), gate: S.isGate(L(68)), noFinale: [67, 69, 70].map(id => S.finaleOf(L(id))) };
   });
-  ok('Jungle: Next 30 -> 31, 59 -> 60, 67 -> 68, 68 -> 69, 69 -> 70, 70 ends; 70 is its finale, not a gate', JSON.stringify(jun.next) === '[31,60,68,69,70,null]' && jun.finale === 'jungle' && !jun.gate && jun.noFinale.every(f => f === null), jun);
+  // play order: the tree levels 69 and 70 come before the Livingstone finale 68
+  ok('Jungle: Next 30 -> 31, 59 -> 60, 67 -> 69, 69 -> 70, 70 -> 68, 68 ends; 68 is its finale, not a gate', JSON.stringify(jun.next) === '[31,60,69,70,68,null]' && jun.finale === 'jungle' && !jun.gate && jun.noFinale.every(f => f === null), jun);
   const r29 = []; for (let i = 1; i <= 29; i++) r29.push(i);
   await seed(r29); await page.waitForTimeout(500);
   const jshut = await page.evaluate(() => ({ chapters: Array.from(document.querySelectorAll('.chapter h3')).map(h => h.textContent), lock: BG.Storage.lockText(59, BG.Levels) }));
@@ -706,20 +708,19 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
   await page.click('.tile[data-id="59"]'); await page.waitForTimeout(1000);
   const jbar = await page.evaluate(() => ({ id: BG.Game.level.id, sub: document.querySelector('#screen-level').textContent }));
   ok('level 59 opens from its tile; the top bar names the Jungle chapter', jbar.id === 59 && jbar.sub.includes(X.jungSub), jbar);
-  // Dr Livingstone waits on the far bank of 68 (the story beat; no longer the chapter finale: Next leads on to 69)
-  await page.evaluate(() => { for (let i = 59; i <= 67; i++) BG.Storage.recordResult(i, { passed: true, stars: 1, cost: 1 }); BG.Game.openLevel(68, { force: true }); }); await page.waitForTimeout(900);
+  // the tree level 70 (The Leaning Kapok): no finale any more, Next leads on to the finale 68
+  await page.evaluate(() => { for (const i of [59, 60, 61, 62, 63, 64, 65, 66, 67, 69]) BG.Storage.recordResult(i, { passed: true, stars: 1, cost: 1 }); BG.Game.openLevel(70, { force: true }); }); await page.waitForTimeout(900);
+  await page.evaluate((d) => { BG.Hud.hideHint(); BG.Game.editor.design = d; BG.Game._lastToggle = -1e9; BG.Game.startSim(); }, sol('70-best'));
+  r = await runSim(120); await page.waitForTimeout(1800);
+  const f70 = await page.evaluate(() => ({ cls: document.querySelector('[data-ref=results]').classList.contains('finale-bonus'), next: document.querySelector('[data-act=next] span').textContent, nextId: (BG.Game.nextInCampaign() || {}).id }));
+  ok('70 passes, no finale: Next leads on to the finale 68', r.res && r.res.passed && !r.res.finaleKind && !f70.cls && f70.next !== X.allLevels && f70.nextId === 68 && r.res.hasNext, Object.assign({ passed: r.res && r.res.passed, kind: r.res && r.res.finaleKind }, f70));
+  // the chapter finale (68): Dr Livingstone waits on the far bank, then the Jungle finale and "All levels"
+  await page.evaluate(() => { BG.Storage.recordResult(70, { passed: true, stars: 1, cost: 1 }); BG.Game.openLevel(68, { force: true }); }); await page.waitForTimeout(900);
   await page.evaluate((d) => { BG.Hud.hideHint(); BG.Game.editor.design = d; BG.Game._lastToggle = -1e9; BG.Game.startSim(); }, sol('68-best'));
   r = await runSim(150); await page.waitForTimeout(1800);
   const f68 = await page.evaluate(() => ({ banner: document.querySelector('[data-ref=resBanner]').textContent, cls: document.querySelector('[data-ref=results]').classList.contains('finale-bonus'), next: document.querySelector('[data-act=next] span').textContent, meeting: !!(BG.JungleFx && BG.JungleFx.lastMeeting) }));
-  ok('68 passes, Dr Livingstone met, no finale: Next leads on to 69', r.res && r.res.passed && !r.res.finaleKind && !f68.cls && f68.next !== X.allLevels && f68.meeting && r.res.hasNext, Object.assign({ passed: r.res && r.res.passed, kind: r.res && r.res.finaleKind }, f68));
-  await shot('48-jungle-livingstone');
-  // the chapter finale (70): The Leaning Kapok
-  await page.evaluate(() => { for (let i = 59; i <= 69; i++) BG.Storage.recordResult(i, { passed: true, stars: 1, cost: 1 }); BG.Game.openLevel(70, { force: true }); }); await page.waitForTimeout(900);
-  await page.evaluate((d) => { BG.Hud.hideHint(); BG.Game.editor.design = d; BG.Game._lastToggle = -1e9; BG.Game.startSim(); }, sol('70-best'));
-  r = await runSim(120); await page.waitForTimeout(1800);
-  const f70 = await page.evaluate(() => ({ banner: document.querySelector('[data-ref=resBanner]').textContent, cls: document.querySelector('[data-ref=results]').classList.contains('finale-bonus'), next: document.querySelector('[data-act=next] span').textContent }));
-  ok('70 passes with the Jungle finale, then "All levels"', r.res && r.res.passed && r.res.finaleKind === 'jungle' && f70.cls && f70.banner.includes(X.jungBanner) && f70.next === X.allLevels, Object.assign({ passed: r.res && r.res.passed, kind: r.res && r.res.finaleKind }, f70));
-  await shot('49-jungle-finale');
+  ok('68 passes: Dr Livingstone met, the Jungle finale, then "All levels"', r.res && r.res.passed && r.res.finaleKind === 'jungle' && f68.cls && f68.banner.includes(X.jungBanner) && f68.next === X.allLevels && f68.meeting, Object.assign({ passed: r.res && r.res.passed, kind: r.res && r.res.finaleKind }, f68));
+  await shot('48-jungle-livingstone-finale');
 
   ok('no console errors', errors.length === 0, errors.slice(0, 15));
   console.log(`\n${results.filter(r => r.pass).length}/${results.length} e2e checks passed`);

@@ -31,6 +31,7 @@
     'hud.levels.chapterLine': 'Levels {from}–{to} · {desc}',
     'hud.levels.gateTipRoad': 'Chapter finale: complete it to go on (it can\'t be skipped)',
     'hud.levels.gateTipRail': 'Line finale: complete it to go on (it can\'t be skipped)',
+    'hud.levels.bonusTip': 'Bonus chapter: its levels count from 1',
     'hud.levels.skipped': 'Skipped — come back later',
     'hud.levels.surveyed': 'This crossing is still being surveyed — coming soon.',
     'hud.levels.lockedDefault': 'Complete one of the two levels before this one to unlock it.',

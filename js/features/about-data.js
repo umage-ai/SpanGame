@@ -8,8 +8,8 @@
     "versionFrom": "tag",
     "released": "2026-10-15",
     "firstCommit": "2026-10-02",
-    "asOf": "2026-10-15",
-    "commits": 58,
+    "asOf": "2026-10-17",
+    "commits": 60,
     "levels": 102,
     "campaigns": 3,
     "campaignLevels": {
@@ -25,9 +25,9 @@
     "browserSuites": 15,
     "languages": 2,
     "jsLines": {
-      "total": 38678,
-      "game": 28169,
-      "tools": 10509
+      "total": 38764,
+      "game": 28239,
+      "tools": 10525
     },
     "jsFiles": 98,
     "repo": "https://github.com/umage-ai/SpanGame",
