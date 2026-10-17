@@ -1181,7 +1181,8 @@
       bonusOpened.forEach((b, i) => setTimeout(() => {
         if (this.state !== 'results') return;
         const kb = 'results.toast.bonus.' + b.id;
-        hudCall('toast', t(I() && I().has(kb, 'en') ? kb : 'results.toast.bonus', { name: bonusName(b), from: b.first, to: b.last }), 'good', 5200);
+        const count = S && S.bonusIds ? S.bonusIds(b).length : b.last - b.first + 1;
+        hudCall('toast', t(I() && I().has(kb, 'en') ? kb : 'results.toast.bonus', { name: bonusName(b), from: 1, to: count }), 'good', 5200);
       }, 1500 + (opened.length + i) * 1800));
       // explain the unlock rule the moment it lets the player skip ahead
       skipOpened.forEach((l, i) => setTimeout(() => {

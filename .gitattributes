@@ -1,0 +1,4 @@
+# the Gradle wrapper scripts: Windows batch needs CRLF, the shell script LF
+*.bat text eol=crlf
+android/gradlew text eol=lf
+*.jar binary

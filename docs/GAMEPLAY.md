@@ -102,7 +102,7 @@ Roads: 50 levels in 6 chapters, plus three hidden bonus chapters (the level sele
 
 **Grand Spans:** 41 Cold Open (100 m) · 42 Twin Channels (105 m) · 43 Monsoon Stays (115 m) · 44 Moonlit Crescent (120 m) · 45 Caldera Cantilever (125 m) · 46 Avalanche Arch (130 m) · 47 Paradise Suspended (140 m) · 48 Flight Path (135 m) · 49 The Long Night (145 m) · 50 Magnum Opus (150 m)
 
-The hidden bonus chapters **7 Forces of Nature** (51–53), **8 Anchorages** (54–58) and **9 Jungle** (59–70) are described below.
+The hidden bonus chapters are described below. On the level select they come after the main line, in the order they open: **Jungle** (after level 30), **Anchorages** (after 40) and **Forces of Nature** (after 50). Each is marked with a star instead of a chapter number and counts its own levels from 1. The tables below give the internal ids, which the saves use.
 
 Every level is verified by `node tools/verify-levels.js` against two designs in `tools/solutions/`:
 
@@ -112,7 +112,7 @@ Every level is verified by `node tools/verify-levels.js` against two designs in 
 
 Budgets are set so the reference costs at most about 88% of the budget and the best design at most 70% (at most 68% on levels 41–50, leaving a little room for hand-built designs). No built-in template earns ★★★ on any level; templates are switched off on levels 1–3, and templates that break a level's rules (for example an arch through a ship channel) are hidden from the menu.
 
-### Iron Road (levels 101–120)
+### Iron Road (levels 1–20, ids 101–120)
 
 ![The Iron Road tab of the level select: four lines of railway levels, the first ones done](screenshots/levels-ironroad.jpg)
 
@@ -140,9 +140,9 @@ The railway campaign opens when road level 10 is complete (the **Iron Road** tab
 
 Rail levels are verified like road levels, plus a ride margin: the reference design's worst kink stays at or below 95% of its limit and the best design's at or below 100% (both pass with no grade over its limit), and the best design passes with no broken member. On 116–120 the best designs cost about 67% of the budget, leaving room for hand-built three-star bridges.
 
-### Forces of Nature (bonus chapter, levels 51–53)
+### Forces of Nature (bonus chapter, levels 1–3, ids 51–53)
 
-Finishing level 50 reveals a hidden seventh chapter where the weather fights back. A **Forecast** chip in the top bar lists what is coming, a banner counts down the last 3 seconds ("Hurricane incoming in 3 s") and then shows the live wind speed or ground shaking, and the sim bar's timeline marks each event.
+Finishing level 50 reveals a hidden bonus chapter where the weather fights back. A **Forecast** chip in the top bar lists what is coming, a banner counts down the last 3 seconds ("Hurricane incoming in 3 s") and then shows the live wind speed or ground shaking, and the sim bar's timeline marks each event.
 
 | Level | Event | Lesson |
 |---|---|---|
@@ -152,9 +152,9 @@ Finishing level 50 reveals a hidden seventh chapter where the weather fights bac
 
 Any level can use weather: add an `events` list to its JSON (see SPEC.md §12).
 
-### Anchorages (bonus chapter, levels 54–58)
+### Anchorages (bonus chapter, levels 1–5, ids 54–58)
 
-Finishing level 40 reveals a hidden eighth chapter about structures that stand on the banks (SPEC.md §17). It branches off the Roads: completing 40 opens 54 (a toast says so), inside the chapter the usual rule applies (either of the two before), none of its levels is a chapter finale that blocks anything, and the Roads carry on at 41 as before. No steel on 54–57: only road, cable and rope, so the deck has to hang from pylons. A pylon in a striped land zone is a concrete column on a footing that can only take a small sideways pull; the stays pull it toward the gap, so every pylon needs a backstay to an inland anchor behind it, or it leans and topples onto the bank. Nothing may cross the amber "KEEP CLEAR" band over the bank roads except rope and cable stays that end at an inland anchor, and on 54–57 nothing may be built below the deck (the build area stops at the road), so there is no way round the pylons.
+Finishing level 40 reveals a hidden bonus chapter about structures that stand on the banks (SPEC.md §17). It branches off the Roads: completing 40 opens its first level (a toast says so), inside the chapter the usual rule applies (either of the two before), none of its levels is a chapter finale that blocks anything, and the Roads carry on at 41 as before. No steel on 54–57: only road, cable and rope, so the deck has to hang from pylons. A pylon in a striped land zone is a concrete column on a footing that can only take a small sideways pull; the stays pull it toward the gap, so every pylon needs a backstay to an inland anchor behind it, or it leans and topples onto the bank. Nothing may cross the amber "KEEP CLEAR" band over the bank roads except rope and cable stays that end at an inland anchor, and on 54–57 nothing may be built below the deck (the build area stops at the road), so there is no way round the pylons.
 
 | Level | Gap | Traffic | The idea |
 |---|---|---|---|
@@ -166,26 +166,26 @@ Finishing level 40 reveals a hidden eighth chapter about structures that stand o
 
 The reference design of 57 stands its towers in the river; every best design uses land pylons. Without their backstays the best designs lose their pylons (checked by `tools/test-anchors.js`, which also checks that no template earns ★★★ here).
 
-### Jungle (bonus chapter, levels 59–70)
+### Jungle (bonus chapter, levels 1–12, ids 59–70)
 
-Finishing level 30 reveals a hidden ninth chapter of light jungle crossings (spec: [docs/jungle/SPEC-JUNGLE.md](jungle/SPEC-JUNGLE.md)). Like Anchorages it branches off the Roads: completing 30 opens 59, the usual either-of-the-two-before rule applies inside, and nothing in it blocks the Roads. The deck is a **Walkway** (a light plank deck that only foot traffic and small carts may use). **Bamboo** is a cheap, light strut that buckles early; **Liana** is the cheapest tension member and weaker than rope. Giant trees and temple ruins serve as anchors, canoe channels must stay clear, a waterfall forbids building in its curtain, and level 66 brings a monsoon wind. On 61, 62, 65, 69 and 70 the bank trees **bend**: they lean towards the pull and the walkway sags with them, and past a limit the roots give way and the tree is **uprooted**, which fails the run (the sim bar and the results show the root load). A **guy rope** from the tree back to the **ground stake** behind it holds it upright. Piers in the jungle are lashed timber trestles and log cribs instead of concrete. The travellers are monkeys, porters, hand carts, an ox cart and a jeep.
+Finishing level 30 reveals a hidden bonus chapter of light jungle crossings (spec: [docs/jungle/SPEC-JUNGLE.md](jungle/SPEC-JUNGLE.md)). Like Anchorages it branches off the Roads: completing 30 opens its first level, the usual either-of-the-two-before rule applies inside, and nothing in it blocks the Roads. The deck is a **Walkway** (a light plank deck that only foot traffic and small carts may use). **Bamboo** is a cheap, light strut that buckles early; **Liana** is the cheapest tension member and weaker than rope. Giant trees and temple ruins serve as anchors, canoe channels must stay clear, a waterfall forbids building in its curtain, and level 8 brings a monsoon wind. On levels 3, 4, 7, 10 and 11 the bank trees **bend**: they lean towards the pull and the walkway sags with them, and past a limit the roots give way and the tree is **uprooted**, which fails the run (the sim bar and the results show the root load). A **guy rope** from the tree back to the **ground stake** behind it holds it upright. Piers in the jungle are lashed timber trestles and log cribs instead of concrete. The travellers are monkeys, porters, hand carts, an ox cart and a jeep.
 
 | Level | Gap | The idea |
 |---|---|---|
-| 59 Monkey Bridge | 14 m | A sagging walkway alone is a rope bridge; liana from the trees steadies it. |
-| 60 Porter's Path | 20 m | Bamboo arrives: a light truss under the deck carries the hand cart. |
-| 61 Canopy Walk | 30 m | Hang the walkway from three giant trees; the two on the banks bend. |
-| 62 Canoe Crossing | 32 m | Keep the canoe channel clear: an arch, or a fan from the bending trees. |
-| 63 Market Day | 24 m | An ox cart: a bamboo truss under the deck, wood where it is squeezed hardest. |
-| 64 Temple Causeway | 42 m | Three spans between the bank and two ruins. |
-| 65 Thundering Falls | 36 m | Jump the waterfall with stays fanned from the trees, guyed back to the stakes. |
-| 66 Monsoon | 34 m | Wind lifts a hung walkway; tie it down from below. |
-| 67 Supply Run | 44 m | The jeep: one low pier and a shallow truss. |
-| 68 Source of the Nile | 56 m | A through-arch from the temple ruins, and someone to meet on the far bank. |
-| 69 Guy Ropes | 24 m | Two bending trees and nothing else to hang from: guy them back to the stakes or they are uprooted. |
-| 70 The Leaning Kapok | 36 m | The finale: an ox cart drags each tree in turn; a guyed fan over a bamboo truss. |
+| 1 Monkey Bridge (id 59) | 14 m | A sagging walkway alone is a rope bridge; liana from the trees steadies it. |
+| 2 Porter's Path (id 60) | 20 m | Bamboo arrives: a light truss under the deck carries the hand cart. |
+| 3 Canopy Walk (id 61) | 30 m | Hang the walkway from three giant trees; the two on the banks bend. |
+| 4 Canoe Crossing (id 62) | 32 m | Keep the canoe channel clear: an arch, or a fan from the bending trees. |
+| 5 Market Day (id 63) | 24 m | An ox cart: a bamboo truss under the deck, wood where it is squeezed hardest. |
+| 6 Temple Causeway (id 64) | 42 m | Three spans between the bank and two ruins. |
+| 7 Thundering Falls (id 65) | 36 m | Jump the waterfall with stays fanned from the trees, guyed back to the stakes. |
+| 8 Monsoon (id 66) | 34 m | Wind lifts a hung walkway; tie it down from below. |
+| 9 Supply Run (id 67) | 44 m | The jeep: one low pier and a shallow truss. |
+| 10 Guy Ropes (id 69) | 24 m | Two bending trees and nothing else to hang from: guy them back to the stakes or they are uprooted. |
+| 11 The Leaning Kapok (id 70) | 36 m | An ox cart drags each tree in turn; a guyed fan over a bamboo truss. |
+| 12 Source of the Nile (id 68) | 56 m | The finale: a through-arch from the temple ruins, and someone to meet on the far bank. |
 
-### Famous Bridges (levels 201–212)
+### Famous Bridges (levels 1–12, ids 201–212)
 
 A separate campaign of real bridges, scaled down but faithful: each crossing keeps the real bridge's proportions, pier positions, shipping channel and kind of traffic, and is set up so that the historical structural type is the natural answer. Before each level a **history card** shows when and where it was built, its engineers, span and type, three facts, and why it matters (the bridge icon in the top bar opens it again). Pick a bridge from the **Famous Bridges** tab on the level select (the third campaign tab, after Roads and Iron Road). It opens when road level 15 is complete; after that the usual rule applies (either of the two previous famous bridges; only the last one, the finale, can't be skipped).
 

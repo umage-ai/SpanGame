@@ -31,13 +31,15 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond }); console
   ok('modules loaded', fresh.forces && fresh.fx);
   ok('bonus chapter hidden on a fresh profile', fresh.chapters.length === 6 && fresh.tiles === 50, fresh);
   // merge (goals / Iron Road): unrevealed bonus levels stay out of the star and badge totals
-  const t0 = await page.evaluate(() => { const totals = () => ({ stars: document.querySelector('[data-ref=lsStars]').textContent.trim(), badges: (document.querySelector('.ls-right .badge-chip') || {}).textContent || null }); return Object.assign(totals(), { gd: Object.keys(BG.GoalsData || {}).length, all: Object.values(BG.GoalsData || {}).reduce((a, g) => a + g.length, 0) }); });
+  const t0 = await page.evaluate(() => { const totals = () => ({ stars: document.querySelector('[data-ref=lsStars]').textContent.trim(), badges: (document.querySelector('.ls-right .chal-camp-chip') || {}).textContent || null }); return Object.assign(totals(), { gd: Object.keys(BG.GoalsData || {}).length, all: Object.entries(BG.GoalsData || {}).filter(([id]) => +id < 100).reduce((a, [, g]) => a + g.length, 0) }); });
+  // (badges: the Roads tab's challenge chip; t0.all = every Roads level's challenges, bonus chapters included)
   ok('hidden bonus levels not counted in road stars / badge totals', t0.stars.endsWith('/ 150') && !!t0.badges && !t0.badges.endsWith('/ ' + t0.all), t0);
   // completing level 50 reveals it (the chapter finales before it are gates, so they are complete too)
   const after = await page.evaluate(() => { [5, 10, 20, 30, 40, 50].forEach(id => BG.Storage.recordResult(id, { passed: true, stars: 1, cost: 1 })); BG.Hud.buildLevelSelect(); return { chapters: Array.from(document.querySelectorAll('.chapter h3')).map(h => h.textContent), open51: !!document.querySelector('.tile.open[data-id="51"]'), open53: !!document.querySelector('.tile.open[data-id="53"]') }; });
-  // (level 40 also reveals the Anchorages, 54-58, and level 30 the Jungle, 59-70, listed after the Forces of Nature)
-  ok('Forces of Nature chapter appears after level 50', after.chapters.length === 9 && after.chapters[6] === 'Forces of Nature' && after.chapters[7] === 'Anchorages' && after.chapters[8] === 'Jungle' && after.open51 && !after.open53, after);
-  const t1 = await page.evaluate(() => { const totals = () => ({ stars: document.querySelector('[data-ref=lsStars]').textContent.trim(), badges: (document.querySelector('.ls-right .badge-chip') || {}).textContent || null }); return totals(); });
+  // (level 40 also reveals the Anchorages and level 30 the Jungle; bonus chapters are listed in the order they open:
+  // Jungle, Anchorages, then the Forces of Nature)
+  ok('Forces of Nature chapter appears after level 50', after.chapters.length === 9 && after.chapters[6] === 'Jungle' && after.chapters[7] === 'Anchorages' && after.chapters[8] === 'Forces of Nature' && after.open51 && !after.open53, after);
+  const t1 = await page.evaluate(() => { const totals = () => ({ stars: document.querySelector('[data-ref=lsStars]').textContent.trim(), badges: (document.querySelector('.ls-right .chal-camp-chip') || {}).textContent || null }); return totals(); });
   ok('revealed bonus levels count in the totals', t1.stars.endsWith('/ 210') && (t1.badges || '').endsWith('/ ' + t0.all), Object.assign({ allGoals: t0.all }, t1));
   await page.waitForTimeout(700);
   await shot('01-levelselect-bonus');

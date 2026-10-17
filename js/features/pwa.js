@@ -1,5 +1,6 @@
 // pwa: BG.PWA - installable / offline shell for SPAN.
-//  - registers sw.js, but only over http(s); on file:// it does nothing (the game still runs)
+//  - registers sw.js, but only over http(s); on file:// and inside the native app shells (window.SpanNative,
+//    docs/NATIVE.md: the app ships its files, so it needs no worker) it does nothing (the game still runs)
 //  - "New version available - tap to reload" toast when an updated worker is waiting
 //  - one-time "ready to play offline" toast after the first install
 //  - Settings: an "Install app" button (beforeinstallprompt) and an iOS "Add to Home Screen" hint
@@ -9,7 +10,8 @@
   const BG = root.BG = root.BG || {};
   const doc = root.document;
   const nav = root.navigator || {};
-  const supported = !!(doc && /^https?:$/.test(root.location && root.location.protocol) && 'serviceWorker' in nav);
+  const native = !!root.SpanNative;
+  const supported = !!(doc && !native && /^https?:$/.test(root.location && root.location.protocol) && 'serviceWorker' in nav);
   const UPDATE_CHECK_MS = 30 * 60 * 1000;
   const OFFLINE_FLAG = 'span.pwa.offlineReady';
 
@@ -28,7 +30,7 @@
     ready: null,            // Promise<ServiceWorkerRegistration|null>
 
     isStandalone() {
-      return mq('(display-mode: standalone)') || mq('(display-mode: fullscreen)') || mq('(display-mode: minimal-ui)') || nav.standalone === true;
+      return native || mq('(display-mode: standalone)') || mq('(display-mode: fullscreen)') || mq('(display-mode: minimal-ui)') || nav.standalone === true;
     },
     isIOS() {
       const ua = nav.userAgent || '';

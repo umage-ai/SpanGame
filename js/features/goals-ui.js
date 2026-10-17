@@ -259,10 +259,10 @@
       c.hidden = !max;
     };
     const ls = Hud.el.levels, ti = Hud.el.title;
+    // the level select counts the open tab only (gold and teal alike); the all-campaign total is on the title screen
     if (ls) {
       const r = ls.querySelector('.ls-right');
-      put(r, 'chip-lg', r && r.querySelector('[data-act=settings]'));
-      safe(() => campaignChip(r, r && r.querySelector('.badge-chip')));
+      safe(() => campaignChip(r, r && r.querySelector('[data-act=settings]')));
     }
     if (ti) { const m = ti.querySelector('.title-meta'); put(m, '', m && m.querySelector('[data-act=settings]')); }
   }

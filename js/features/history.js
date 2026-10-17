@@ -961,6 +961,8 @@
     const str = H.exportString();
     const d = new Date();
     const name = 'span-save-' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.json';
+    // the native app shells have no downloads: they save through the system file picker (js/features/native.js)
+    if (BG.Native && BG.Native.saveFile(name, str)) return;
     try {
       const blob = new Blob([str], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

@@ -1172,3 +1172,28 @@ Full spec and the record of every deviation: [docs/challenges/SPEC-CHALLENGES.md
   concrete; trees bend and uproot, stakes are wooden pegs (`js/features/jungle-fx.js`).
 - **Tests:** `tools/test-tree-anchors.js` (new), plus updates to test-goals, test-jungle, test-unlock, e2e, e2e-events
   and e2e-goals.
+
+## 22. Native app shells (feature/android)
+
+The Android app (`android/`, later an iOS app built with xtool) wraps the shipped game in a WebView. It doesn't fork the game: every app build bundles the current files with `tools/build-web-bundle.js`, which uses the precache list from `tools/gen-precache.js`. Contract:
+
+- the shell defines `window.SpanNative` (`getPlatform()`, `getVersion()`, `saveFile(name, text)`) before any game script runs;
+- the shell calls `BG.Native.back()` (true = handled; false = leave the app), `pause()`, `resume()` and `saved(ok)` (`js/features/native.js`);
+- with a shell, `BG.PWA.supported` is false (no service worker) and `isStandalone()` is true;
+- the Android origin `https://appassets.androidplatform.net/assets/www/` is fixed forever, because `localStorage` saves live on it.
+
+Details, builds, signing and the iOS plan: [docs/NATIVE.md](docs/NATIVE.md). Tests: `tools/test-native.js`.
+
+## 23. Level numbers players see (fix/level-numbering)
+
+Ids are permanent (saves, designs, history and badges are keyed by them). The number on tiles, chapter headers, the level badge, lock texts and toasts comes from `BG.Storage.levelNumber(levels, level)`:
+
+- the main Roads show their id, 1–50;
+- each Roads bonus chapter counts 1..n in play order: Forces of Nature 1–3, Anchorages 1–5, Jungle 1–12;
+- every other campaign counts 1..n in id order (stubs included): the Iron Road 1–20, Famous Bridges 1–12.
+
+Elsewhere in the UI, `BG.Hud.levelLabel` puts the part's name first ("Jungle 3", "Iron Road 7"), so one number never means two levels. On the level select, bonus chapters come after the main line in the order they open (Jungle after 30, Anchorages after 40, Forces of Nature after 50). They show a star instead of a chapter number.
+
+A bonus chapter can list its levels in `order` when play order differs from id order. The Jungle plays the tree levels 69 and 70 before its Livingstone finale 68, so its `last` (the chapter finale) is 68.
+
+The level-select header counts the open tab only: gold stars and teal challenge stars. The title screen shows the totals across all campaigns.

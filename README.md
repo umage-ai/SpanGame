@@ -55,7 +55,7 @@ Press **Test** and the traffic drives across. The simulation is an XPBD solver r
 
 ![A green steam locomotive with coaches crosses a masonry and steel viaduct, smoke trailing behind](docs/screenshots/ironroad.jpg)
 
-Twenty railway levels (101–120) open after road level 10, in four lines:
+Twenty railway levels open after road level 10, in four lines:
 
 | Line | Levels | Trains | What you learn |
 |---|---|---|---|
@@ -179,11 +179,13 @@ More detail on the rules, the badges, the daily challenge and every level is in 
 | Campaign | Levels | Opens | What it is |
 |---|---|---|---|
 | **Roads** | 1–50 in six chapters | from the start | from a 10 m creek crossed with two planks to a 150 m span carrying tankers and heavy haulers |
-| ↳ *Forces of Nature* (bonus) | 51–53 | after level 50 | a hurricane, an M8 earthquake and a galloping deck in pulsing wind |
-| ↳ *Anchorages* (bonus) | 54–58 | after level 40 | land pylons, buried deadman anchors and backstays |
-| ↳ *Jungle* (bonus) | 59–70 | after level 30 | walkways, bamboo, liana and rope; bending trees, ground stakes and ruins as anchors; canoe channels, a waterfall and a monsoon |
-| **Iron Road** | 101–120 in four lines | after level 10 | railway bridges for handcars up to 2000-tonne ore trains and 150 km/h expresses |
-| **Famous Bridges** | 201–212 | after level 15 | scaled-down real bridges, each with a history card |
+| ↳ *Jungle* (bonus) | 1–12 | after level 30 | walkways, bamboo, liana and rope; bending trees, ground stakes and ruins as anchors; canoe channels, a waterfall and a monsoon |
+| ↳ *Anchorages* (bonus) | 1–5 | after level 40 | land pylons, buried deadman anchors and backstays |
+| ↳ *Forces of Nature* (bonus) | 1–3 | after level 50 | a hurricane, an M8 earthquake and a galloping deck in pulsing wind |
+| **Iron Road** | 1–20 in four lines | after level 10 | railway bridges for handcars up to 2000-tonne ore trains and 150 km/h expresses |
+| **Famous Bridges** | 1–12 | after level 15 | scaled-down real bridges, each with a history card |
+
+The main Roads are numbered 1–50. Every other part of the game counts its own levels from 1: each bonus chapter (marked with a star instead of a chapter number, and listed in the order it opens), the Iron Road and Famous Bridges. (Internally the levels keep their ids: Forces of Nature 51–53, Anchorages 54–58, Jungle 59–70, Iron Road 101–120 and Famous Bridges 201–212. Saves are keyed by these ids.)
 | **Daily Challenge** / **Endless** | generated | from the start | a proven-solvable crossing per day; endless ever-harder crossings |
 
 Every campaign level ships with two saved solutions: a reference design and a cheap "best" design that proves three stars are reachable. `node tools/verify-levels.js` re-simulates all of them. See [docs/LEVEL-AUTHORING.md](docs/LEVEL-AUTHORING.md).
@@ -197,6 +199,8 @@ Served over http(s), SPAN is an installable Progressive Web App:
 - **Updates:** when a new version is deployed, a **New version available — tap to reload** toast appears. Designs are saved, so reloading is safe.
 
 Opened from `file://` the game plays exactly the same, just without install and offline caching (browsers only run service workers on https and localhost).
+
+**Android app:** `npm run android:debug` builds an APK, and `npm run android:release` builds the Google Play bundle. The app is a thin WebView shell around the same game files, which are copied in on every build, so it always matches the web version. See [docs/NATIVE.md](docs/NATIVE.md). An iOS app built the same way is planned.
 
 ## Languages
 
@@ -274,7 +278,7 @@ Everything hangs off one global, `window.BG`. See [docs/ARCHITECTURE.md](docs/AR
 Ideas and plans live in the [issue tracker](https://github.com/umage-ai/SpanGame/issues):
 
 - [#1 Zachtronics-style histograms](https://github.com/umage-ai/SpanGame/issues/1): compare your bridge's cost and weight against other players'.
-- [#2 Inland anchors and land-based pylons](https://github.com/umage-ai/SpanGame/issues/2): backstays and anchorages on the banks. The first part has shipped as the *Anchorages* bonus chapter (levels 54–58).
+- [#2 Inland anchors and land-based pylons](https://github.com/umage-ai/SpanGame/issues/2): backstays and anchorages on the banks. The first part has shipped as the *Anchorages* bonus chapter.
 - [#3 SPAN Underground](https://github.com/umage-ai/SpanGame/issues/3): an expansion idea about tunnel building and digging.
 
 ## Contributing

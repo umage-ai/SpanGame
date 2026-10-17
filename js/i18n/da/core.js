@@ -42,6 +42,7 @@
     'core.docTitle': 'SPAN — Brobygger',
     'core.canvasAria': 'Visning af brobyggeriet',
     'core.level': 'Bane {n}',
+    'core.levelIn': '{name} {n}',
     'core.settings': 'Indstillinger',
     'core.close': 'Luk',
     'core.done': 'Færdig',
