@@ -26,7 +26,7 @@ const ok = (name, cond, info) => { results.push(!!cond); console.log((cond ? 'PA
   const nLevels = await page.evaluate(() => BG.Levels.filter(l => !BG.Requirements || BG.Requirements.met(l)).length); // famous: stubs have no goals yet
   ok('goals data loaded for every playable level (road + rail + famous)', Object.keys(goalsData).length === nLevels && nLevels >= 70, { goals: Object.keys(goalsData).length, nLevels });
   await page.evaluate(() => BG.Game.goLevelSelect()); await page.waitForTimeout(700);
-  const ls = await page.evaluate(() => ({ tiles: document.querySelectorAll('.tile-badges').length, chip: (document.querySelector('.ls-right .badge-chip') || {}).textContent }));
+  const ls = await page.evaluate(() => ({ tiles: document.querySelectorAll('.tile-badges').length, chip: (document.querySelector('#screen-title .badge-chip') || {}).textContent, lsTotal: document.querySelectorAll('.ls-right .badge-chip').length }));
   ok('level tiles show challenge-star pips', ls.tiles === 50, ls);
   // one teal pip per challenge on every tile, none earned on a fresh profile; chapter totals; campaign chip
   const pips = await page.evaluate(() => {
@@ -51,18 +51,19 @@ const ok = (name, cond, info) => { results.push(!!cond); console.log((cond ? 'PA
   // unrevealed hidden bonus levels (Forces of Nature 51-53) are not counted until their chapter opens
   const hiddenIds = await page.evaluate(() => (BG.Hud.hiddenLevelIds ? BG.Hud.hiddenLevelIds() : []));
   const sumB = Object.entries(goalsData).reduce((a, [id, s]) => a + (hiddenIds.includes(+id) ? 0 : s.length), 0);
-  ok('level select total badge chip (both campaigns)', new RegExp('0\\s*/\\s*' + sumB).test(ls.chip || '') && maxB === sumB, { chip: ls.chip, maxB, sumB, hiddenIds });
+  // the all-campaign total lives on the title screen; the level select counts the open tab only
+  ok('title total badge chip (both campaigns), none in the level select header', new RegExp('0\\s*/\\s*' + sumB).test(ls.chip || '') && maxB === sumB && ls.lsTotal === 0, { chip: ls.chip, lsTotal: ls.lsTotal, maxB, sumB, hiddenIds });
   await shot('01-levelselect');
   // campaign tabs: the Iron Road tab rebuilds the grid; its tiles get badge counts too, and back again
   await page.evaluate(() => BG.Hud.setCampaignTab('rail')); await page.waitForTimeout(500);
   const rl = await page.evaluate(() => ({ tab: BG.Hud.tab, tiles: document.querySelectorAll('.tile.is-rail .tile-badges').length, chips: document.querySelectorAll('.ls-right .badge-chip').length }));
   const railCamp = await page.evaluate(() => ({ n: document.querySelectorAll('.ls-right .chal-camp-chip').length, t: document.querySelector('.ls-right .chal-camp-chip').textContent.trim(), max: Array.from(document.querySelectorAll('.tile[data-id]:not(.soon)')).reduce((a, t) => a + BG.Goals.forLevel(+t.dataset.id).length, 0) }));
-  ok('Iron Road tab: rail tiles show challenge pips, one total chip', rl.tab === 'rail' && rl.tiles === 20 && rl.chips === 1, rl);
+  ok('Iron Road tab: rail tiles show challenge pips, no all-campaign total in the header', rl.tab === 'rail' && rl.tiles === 20 && rl.chips === 0, rl);
   ok('campaign chip follows the tab (Iron Road total)', railCamp.n === 1 && railCamp.t.replace(/\s/g, '') === '0/' + railCamp.max, railCamp);
   await shot('01b-levelselect-rail');
   await page.evaluate(() => BG.Hud.setCampaignTab('road')); await page.waitForTimeout(500);
   const rd = await page.evaluate(() => ({ tiles: document.querySelectorAll('.tile-badges').length, chips: document.querySelectorAll('.ls-right .badge-chip').length }));
-  ok('Roads tab again: 50 tiles with badge counts, no duplicate chip', rd.tiles === 50 && rd.chips === 1, rd);
+  ok('Roads tab again: 50 tiles with badge counts, no all-campaign total in the header', rd.tiles === 50 && rd.chips === 0, rd);
 
   // play level 1 with the symmetric goal design
   const sol = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'solutions', 'goals', 'level-01-' + goalsData[1][0].type + '.json'), 'utf8'));
@@ -97,7 +98,7 @@ const ok = (name, cond, info) => { results.push(!!cond); console.log((cond ? 'PA
   // persistence across reload
   await page.reload(); await page.waitForTimeout(1500);
   await page.evaluate(() => BG.Game.goLevelSelect()); await page.waitForTimeout(700);
-  const after = await page.evaluate(() => ({ total: BG.Storage.totalBadges(), t1: (document.querySelector('.tile[data-id="1"] .tile-badges') || {}).textContent, chip: document.querySelector('.ls-right .badge-chip').textContent }));
+  const after = await page.evaluate(() => ({ total: BG.Storage.totalBadges(), t1: (document.querySelector('.tile[data-id="1"] .tile-badges') || {}).textContent, chip: document.querySelector('#screen-title .badge-chip').textContent }));
   after.t1 = await page.evaluate(() => document.querySelectorAll('.tile[data-id="1"] .tile-badges .chal-star.on').length);
   after.ch = await page.evaluate(() => document.querySelector('section.chapter .ch-challenges').textContent.trim());
   after.camp = await page.evaluate(() => document.querySelector('.ls-right .chal-camp-chip').textContent.trim());

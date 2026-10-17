@@ -597,3 +597,6 @@ body.track-on .toasts { bottom: 176px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; transition-duration: .01ms !important; }
 }
+/* bonus chapters count their levels from 1 and carry a star where the main chapters carry their number */
+.ch-num.ch-bonus svg { width: 24px; height: 24px; }
+.ch-num.ch-bonus svg path, .ch-num.ch-bonus svg polygon { fill: #10131c; stroke: none; }
