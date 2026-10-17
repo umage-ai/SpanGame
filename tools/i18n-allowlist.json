@@ -13,6 +13,7 @@
     "/^famous\\.\\d+\\.(name|year|built|location|crosses|engineer)$/",
     "/^levels\\.2\\d\\d\\.name$/",
     "hud.levels.subBonus",
+    "hud.level.badgeBonus",
     "hud.settings.vibration",
     "hud.settings.perfAuto",
     "hud.keys.test",

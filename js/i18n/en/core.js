@@ -5,6 +5,7 @@
     'core.docTitle': 'SPAN — Bridge Builder',
     'core.canvasAria': 'Bridge construction view',
     'core.level': 'Level {n}',
+    'core.levelIn': '{name} {n}',
     'core.settings': 'Settings',
     'core.close': 'Close',
     'core.done': 'Done',

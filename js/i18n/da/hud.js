@@ -31,6 +31,7 @@
     'hud.levels.chapterLine': 'Bane {from}–{to} · {desc}',
     'hud.levels.gateTipRoad': 'Kapitelfinale: gennemfør den for at komme videre (den kan ikke springes over)',
     'hud.levels.gateTipRail': 'Linjefinale: gennemfør den for at komme videre (den kan ikke springes over)',
+    'hud.levels.bonusTip': 'Bonuskapitel: banerne tælles fra 1',
     'hud.levels.skipped': 'Sprunget over — kom tilbage senere',
     'hud.levels.surveyed': 'Denne overgang bliver stadig opmålt — kommer snart.',
     'hud.levels.lockedDefault': 'Gennemfør en af de to baner før denne for at låse den op.',
@@ -161,6 +162,7 @@
     // ---- i banen: topbjælken
     'hud.level.badge': 'BANE',
     'hud.level.badgeRail': 'TOG',
+    'hud.level.badgeBonus': 'BONUS',
     'hud.level.chapter': 'Kapitel {n}',
     'hud.level.line': 'Linje {n}',
     'hud.level.gap': '{gap} kløft',

@@ -106,6 +106,8 @@
     // nothing after it unlocks until it is complete. The campaign's `last` and `bonusLast` are gates too.
     // Famous Bridges run in date order with no chapters, so only their finale is a gate.
     // `bonus`: hidden bonus chapters that branch off the campaign's main line (Anchorages, 54-58, opens after level 40; Jungle, 59-70, opens after level 30):
+    // a chapter may list its levels in `order` when play order differs from id order (Jungle: the tree levels 69-70 come
+    // before the Livingstone finale 68, so `last` is 68); ids never change, because saves are keyed by them.
     // their levels unlock in their own list (the first once `unlockAfter` is complete, then the usual either-of-two rule),
     // they are never gates and never block the main line, Next stays inside the chapter, and finishing `last` shows the
     // chapter's own finale (finaleOf -> the chapter id). The Forces of Nature (51-53) stay on the main line after 50.
@@ -114,7 +116,7 @@
     CAMPAIGNS: {
       road: lazyName({ id: 'road', first: 1, last: 50, bonusLast: 53, unlockAfter: null, gates: [5, 10, 20, 30, 40, 50],
         bonus: [lazyName({ id: 'anchorages', first: 54, last: 58, unlockAfter: 40 }, 'hud.chapter.anchorages.name'),
-          lazyName({ id: 'jungle', first: 59, last: 70, unlockAfter: 30 }, 'hud.chapter.jungle.name')] }, 'hud.camp.road.name'),
+          lazyName({ id: 'jungle', first: 59, last: 68, unlockAfter: 30, order: [59, 60, 61, 62, 63, 64, 65, 66, 67, 69, 70, 68] }, 'hud.chapter.jungle.name')] }, 'hud.camp.road.name'),
       rail: lazyName({ id: 'rail', first: 101, last: 120, unlockAfter: 10, gates: [105, 110, 115, 120] }, 'hud.camp.rail.name'),
       famous: lazyName({ id: 'famous', first: 201, last: 212, unlockAfter: 15, gates: [] }, 'famous.tab.name'),
     },
@@ -143,8 +145,15 @@
       if (!level || typeof level.id !== 'number') return null;
       const c = Storage.CAMPAIGNS[Storage.campaignOf(level)];
       const list = c && Array.isArray(c.bonus) ? c.bonus : [];
-      for (const b of list) if (level.id >= b.first && level.id <= b.last) return b;
+      for (const b of list) if (Storage.bonusIds(b).indexOf(level.id) >= 0) return b;
       return null;
+    },
+    // a bonus chapter's level ids in play order
+    bonusIds(b) {
+      if (Array.isArray(b.order)) return b.order;
+      const ids = [];
+      for (let id = b.first; id <= b.last; id++) ids.push(id);
+      return ids;
     },
     // the ordered list a level unlocks along and "Next" follows: its bonus chapter's playable levels, or its campaign's
     // playable levels without the branching bonus chapters (the main line)
@@ -152,8 +161,27 @@
       const camp = Storage.campaignOf(level);
       const all = Storage.campaignLevels(levels, camp);
       const b = Storage.bonusChapterOf(level);
-      if (b) return all.filter(l => Storage.bonusChapterOf(l) === b);
+      if (b) {
+        const ids = Storage.bonusIds(b);
+        return all.filter(l => Storage.bonusChapterOf(l) === b).sort((x, y) => ids.indexOf(x.id) - ids.indexOf(y.id));
+      }
       return all.filter(l => !Storage.bonusChapterOf(l));
+    },
+    // The number players see for a level (tiles, chapter headers, the level badge, lock texts, toasts). Ids stay what
+    // they are (saves are keyed by them); the number counts within the part of the game the level belongs to:
+    //   Roads main line 1-50 = the id; each Roads bonus chapter counts 1..n in play order (Forces of Nature 51-53 -> 1-3,
+    //   Anchorages 54-58 -> 1-5, Jungle -> 1-12); every other campaign counts 1..n in id order (Iron Road 101-120 -> 1-20,
+    //   Famous Bridges 201-212 -> 1-12, stubs included so the numbers never shift when one becomes playable).
+    levelNumber(levels, level) {
+      if (!level || typeof level.id !== 'number') return null;
+      const camp = Storage.campaignOf(level), c = Storage.CAMPAIGNS[camp], id = level.id;
+      if (!c) return id;
+      const b = Storage.bonusChapterOf(level);
+      if (b) return Storage.bonusIds(b).indexOf(id) + 1;
+      if (camp === 'road') return c.bonusLast != null && id > c.last && id <= c.bonusLast ? id - c.last : id;
+      const ids = (levels || []).filter(l => l && Storage.campaignOf(l) === camp && typeof l.id === 'number').map(l => l.id).sort((x, y) => x - y);
+      const i = ids.indexOf(id);
+      return i >= 0 ? i + 1 : id - c.first + 1;
     },
     isCampaignFinale(level) { return Storage.finaleOf(level) != null; },
     // a level can be played when the optional modules it needs are installed and it is not a stub
@@ -242,7 +270,7 @@
       const b = Storage.bonusChapterOf(lv);
       if (b && b.unlockAfter != null && !Storage.isCompleted(b.unlockAfter)) return t('hud.unlock.bonus', { n: b.unlockAfter, name: b.name });
       const levelName = l => (BG.i18n ? BG.i18n.levelText(l, 'name') : l.name);
-      const name = l => (campaign === 'famous' && l.name ? levelName(l) : t('hud.unlock.levelRef', { n: l.id }));
+      const name = l => (campaign === 'famous' && l.name ? levelName(l) : t('hud.unlock.levelRef', { n: Storage.levelNumber(levels, l) }));
       const gk = 'hud.unlock.gate.' + campaign;
       for (let k = 0; k < idx; k++) {
         if (Storage.isGate(list[k]) && !Storage.isCompleted(list[k].id)) return t(has(gk) ? gk : 'hud.unlock.gate', { name: name(list[k]) });
