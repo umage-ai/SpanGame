@@ -162,6 +162,7 @@
     // ---- in-level HUD: top bar
     'hud.level.badge': 'LEVEL',
     'hud.level.badgeRail': 'RAIL',
+    'hud.level.badgeBonus': 'BONUS',
     'hud.level.chapter': 'Chapter {n}',
     'hud.level.line': 'Line {n}',
     'hud.level.gap': '{gap} gap',

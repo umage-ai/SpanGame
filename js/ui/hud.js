@@ -1099,7 +1099,9 @@
       const id = levelId(level);
       const camp = campaignOf(level);
       const cu = campaignUi(camp);
-      $('.lvl-k', this.el.level).textContent = cu.levelK || t('hud.level.badge');
+      // a bonus chapter counts from 1, so its badge says BONUS (phones hide the subtitle that names the chapter)
+      const bonusCh = camp === 'road' && CHAPTERS.some(c => c.hidden && id >= c.from && id <= c.to);
+      $('.lvl-k', this.el.level).textContent = bonusCh ? t('hud.level.badgeBonus') : (cu.levelK || t('hud.level.badge'));
       this.el.lvlName.textContent = lvName(level) || levelLabel(level);
       const tr0 = level.terrain || {};
       const gap = (tr0.rightEdge != null && tr0.leftEdge != null) ? Math.round(tr0.rightEdge - tr0.leftEdge) : null;
