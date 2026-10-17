@@ -162,6 +162,7 @@
     // ---- i banen: topbjælken
     'hud.level.badge': 'BANE',
     'hud.level.badgeRail': 'TOG',
+    'hud.level.badgeBonus': 'BONUS',
     'hud.level.chapter': 'Kapitel {n}',
     'hud.level.line': 'Linje {n}',
     'hud.level.gap': '{gap} kløft',
