@@ -40,7 +40,7 @@ npm run bundle:web -- <dir>             # only the web bundle (also what the iOS
    ```
 2. Local release builds read `SPAN_KEYSTORE` (path), `SPAN_KEYSTORE_PASSWORD`, `SPAN_KEY_ALIAS` and `SPAN_KEY_PASSWORD`. CI reads the repository secrets `ANDROID_KEYSTORE_BASE64` (`base64 -w0 span-upload.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. Without them, the release files are unsigned.
 3. In the Play Console, create the app `ai.umage.span`, enrol in **Play App Signing** (Google keeps the app signing key; yours is only the upload key), and upload `span-<version>.aab`.
-4. Store listing facts: no permissions, no network use, no data collected or shared (progress stays on the device; Android's auto-backup may back it up). It's a game with no ads and no in-app purchases. The target API is 36.
+4. The store listing is ready in [docs/store/](store/): texts in English and Danish, Play Console answers ([PLAY-CONSOLE.md](store/PLAY-CONSOLE.md)), and screenshots, the feature graphic and the icon from `npm run store:assets`. The privacy policy is `privacy.html`, published at https://umage-ai.github.io/SpanGame/privacy.html. Store listing facts: no permissions, no network use, no data collected or shared (progress stays on the device; Android's auto-backup may back it up). It's a game with no ads and no in-app purchases. The target API is 36.
 
 ## What the shell does
 

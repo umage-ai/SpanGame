@@ -36,7 +36,8 @@
     "screenshots": "node tools/screenshots.js",
     "android:debug": "node tools/android.js assembleDebug",
     "android:release": "node tools/android.js bundleRelease assembleRelease",
-    "bundle:web": "node tools/build-web-bundle.js"
+    "bundle:web": "node tools/build-web-bundle.js",
+    "store:assets": "node tools/store-assets.js"
   },
   "engines": {
     "node": ">=18"
