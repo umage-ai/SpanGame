@@ -18,7 +18,7 @@ The one rule that matters most: **a level is not finished until `node tools/veri
 6. Generate and prove the challenge badges: `node tools/gen-goals.js --only NN`, then `node tools/test-goals.js`.
 7. Run `node tools/test-templates.js` to make sure no template earns three stars, then `node tools/gen-precache.js` (levels.js is a shipped file) and the rest of the suites ([TESTING.md](TESTING.md)).
 
-Ids: Roads use 1–70 (`level-01.json` … with two-digit padding below 100), the Iron Road 101–120, Famous Bridges 201–212. Pick a free range for a new campaign.
+Ids: Roads use 1–70 (`level-01.json` … with two-digit padding below 100), the Iron Road 101–120, Famous Bridges 201–212. Pick a free range for a new campaign. Ids are permanent: saves are keyed by them. Players see a number from `BG.Storage.levelNumber` instead. The main Roads show their id (1–50); every other part counts from 1: each Roads bonus chapter in play order (its `order` list in `BG.Storage.CAMPAIGNS`, if it has one, e.g. the Jungle plays 69 and 70 before its finale 68), the Iron Road 1–20, and Famous Bridges 1–12.
 
 ## Level JSON reference
 
