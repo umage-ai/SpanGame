@@ -8,6 +8,7 @@ node_modules/
 *.log
 *.tmp
 npm-debug.log*
+/*.png
 
 # the Pages workflow assembles the site here
 _site/

@@ -1,0 +1,24 @@
+# Runs every Node-only test suite (npm test) on pull requests and pushes to main.
+# No npm install: the Node suites need no dependencies (Playwright is only for the browser suites, which run locally).
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Node test suites
+        run: npm test
