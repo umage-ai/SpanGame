@@ -1,0 +1,113 @@
+# iOS app: builds the SPAN app shell from the current game (docs/NATIVE.md).
+#  - every run: the game bundle, the XcodeGen project and a simulator build (no signing) to prove it compiles
+#  - pull requests: stop there (no signing secrets are given to pull requests)
+#  - a published GitHub release or a manual run: archive, export and upload the build to App Store Connect (TestFlight)
+# Repository secrets, all optional: if ASC_KEY_ID is missing the upload is skipped with a warning.
+#   APPLE_TEAM_ID   10-character Apple Developer team ID
+#   ASC_KEY_ID      App Store Connect API key ID
+#   ASC_ISSUER_ID   App Store Connect issuer ID
+#   ASC_KEY_P8      contents of the AuthKey_<ASC_KEY_ID>.p8 file (the whole text, including BEGIN/END lines)
+# Requirements: the xcodebuild flags used here need Xcode 13+ (macos-latest ships a newer one). The API key needs the
+# App Manager role. The uploaded build then appears in App Store Connect > TestFlight after processing.
+name: iOS app
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'tools/build-web-bundle.js'
+      - 'tools/gen-precache.js'
+      - 'js/features/native.js'
+      - '.github/workflows/ios.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Web bundle (the game for the app)
+        run: node tools/build-web-bundle.js ios/SPAN/www --platform ios
+
+      - name: Generate the Xcode project
+        run: |
+          brew install xcodegen
+          cd ios && xcodegen generate
+
+      - name: Version from package.json
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
+          BUILD=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUILD=$BUILD" >> "$GITHUB_ENV"
+          echo "Version $VERSION (build $BUILD)"
+
+      # Always: a simulator build, no signing, to prove the app compiles.
+      - name: Simulator build (no signing)
+        run: |
+          xcodebuild -project ios/SPAN.xcodeproj -scheme SPAN -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD build
+
+      # Only outside pull requests, and only when the App Store Connect secrets exist.
+      - name: Archive, export and upload to App Store Connect (TestFlight)
+        if: github.event_name != 'pull_request'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY_P8" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            echo "::warning::App Store Connect secrets are not set (APPLE_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8): skipping the TestFlight upload"
+            exit 0
+          fi
+
+          # the API key, where xcodebuild looks for it
+          KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          KEY_PATH="$KEY_DIR/AuthKey_$ASC_KEY_ID.p8"
+          mkdir -p "$KEY_DIR"
+          printf '%s\n' "$ASC_KEY_P8" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+
+          xcodebuild archive -project ios/SPAN.xcodeproj -scheme SPAN -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/SPAN.xcarchive" \
+            DEVELOPMENT_TEAM=$APPLE_TEAM_ID MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD \
+            "${AUTH[@]}"
+
+          # method app-store-connect + destination upload: xcodebuild uploads the build itself
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>destination</key>
+            <string>upload</string>
+            <key>teamID</key>
+            <string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+          </dict>
+          </plist>
+          PLIST
+
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/SPAN.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            "${AUTH[@]}"
+
+          rm -f "$KEY_PATH"

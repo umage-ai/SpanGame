@@ -68,10 +68,27 @@ The bridge contract, which the iOS shell must also follow:
 - `node tools/test-native.js` (part of `npm test`) checks that the bundle is exactly the precache list without `sw.js`, `tools/` or docs, that `BG.Native` behaves as described in a browser and in a shell, and that the Android project keeps its guarantees: no permissions, the fixed origin, rotation without a reload, and the bundle step in every build.
 - On a device or emulator: debug builds allow WebView debugging. Forward it with `adb forward tcp:9471 localabstract:webview_devtools_remote_<pid>` (`<pid>` from `adb shell pidof ai.umage.span.debug`) and use `chrome://inspect`, or send `Runtime.evaluate` over the DevTools websocket. An emulator also runs headless: `emulator -avd <name> -no-window -no-audio`, with screenshots from `adb exec-out screencap -p`.
 
-## iOS (planned, with xtool)
+## iPhone, iPad and Mac (`ios/`)
 
-The same bundle step (`node tools/build-web-bundle.js <dir> --platform ios`) feeds a small SwiftPM app built with [xtool](https://github.com/xtool-org/xtool):
+One universal iOS app covers the iPhone and the iPad. App Store Connect can also offer it on Apple Silicon Macs ("Designed for iPad"; the project sets `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD`). It is the same thin shell as on Android, in Swift (`ios/SPAN/Sources/`):
 
-- a `WKWebView` that loads `www/index.html` through a custom URL scheme handler (a fixed origin, as on Android, so `localStorage` survives updates);
-- a `WKUserScript` injected at `.atDocumentStart` that defines `window.SpanNative`, with `saveFile` forwarded through a `WKScriptMessageHandler` to a document picker;
-- `pause()` and `resume()` from the scene lifecycle; iOS has no back button, so `back()` is unused.
+- a full-screen `WKWebView` loading `span-app://localhost/index.html`, served from the bundled `www/` folder by a `WKURLSchemeHandler` (`AppSchemeHandler.swift`). That scheme and host are the page origin that holds the saves. **Never change them.**
+- a `WKUserScript` at document start that defines `window.SpanNative` (`getPlatform()` = `ios`, `getVersion()`, `saveFile()`). Save export goes through a script message to the system "Save to Files" picker, which answers `BG.Native.saved(ok)`. Import (`<input type=file>`) works in `WKWebView` without extra code.
+- `BG.Native.pause()` / `resume()` from the scene lifecycle. iOS has no back button, so `back()` is unused.
+- links off the app origin open in Safari; the status bar and home indicator are hidden.
+
+The game files are not in the repository copy of `ios/`: `npm run ios:bundle` (`tools/build-web-bundle.js ios/SPAN/www --platform ios`) writes them, and CI runs it before every build.
+
+### Building
+
+There are two routes. Neither needs a Mac on your desk.
+
+- **CI (the App Store route), `.github/workflows/ios.yml` on a GitHub macOS runner.** It bundles the game, generates `ios/SPAN.xcodeproj` from `ios/project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen), and always builds for the simulator, which proves the code compiles. On a published GitHub release (or a manual run), and when the signing secrets are set, it archives and uploads the build to App Store Connect, where it appears in TestFlight. The version is `package.json`'s, and the build number uses the same rule as the Android version code.
+- **Your own iPhone or iPad with [xtool](https://github.com/xtool-org/xtool)** from Windows (WSL) or Linux: `ios/Package.swift` and `ios/xtool.yml` describe the same app as a SwiftPM package. Run `npm run ios:bundle`, then `xtool dev` in `ios/` (see xtool's docs for signing in with your Apple ID and pairing the device). This route is for testing on devices; App Store uploads go through CI.
+
+### Signing and the App Store
+
+1. Join the **Apple Developer Program** ($99/year). An organization account needs the D-U-N-S number, the same one as for Google Play.
+2. In App Store Connect, create the app with bundle id `ai.umage.span`, and an **API key** (Users and Access → Integrations) with the *App Manager* role.
+3. Add the repository secrets `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` (the contents of the downloaded `.p8` file). CI then signs automatically (`-allowProvisioningUpdates` with the API key), so no certificates or profiles need to be managed by hand.
+4. Listing: privacy labels "Data Not Collected", age rating 4+, the same privacy policy URL, and screenshots for the 6.9" iPhone and the 13" iPad. In the review notes, mention that the whole game runs offline from the app bundle (Apple's guideline 4.2 rejects apps that only wrap a website).

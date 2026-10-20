@@ -200,7 +200,7 @@ Served over http(s), SPAN is an installable Progressive Web App:
 
 Opened from `file://` the game plays exactly the same, just without install and offline caching (browsers only run service workers on https and localhost).
 
-**Android app:** `npm run android:debug` builds an APK, and `npm run android:release` builds the Google Play bundle. The app is a thin WebView shell around the same game files, which are copied in on every build, so it always matches the web version. See [docs/NATIVE.md](docs/NATIVE.md). An iOS app built the same way is planned.
+**Android app:** `npm run android:debug` builds an APK, and `npm run android:release` builds the Google Play bundle. The app is a thin WebView shell around the same game files, which are copied in on every build, so it always matches the web version. See [docs/NATIVE.md](docs/NATIVE.md). The iPhone / iPad (and Apple Silicon Mac) app in `ios/` is built the same way: `npm run ios:bundle`, then a GitHub macOS runner builds and uploads it.
 
 ## Languages
 

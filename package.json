@@ -37,6 +37,7 @@
     "android:debug": "node tools/android.js assembleDebug",
     "android:release": "node tools/android.js bundleRelease assembleRelease",
     "bundle:web": "node tools/build-web-bundle.js",
+    "ios:bundle": "node tools/build-web-bundle.js ios/SPAN/www --platform ios",
     "store:assets": "node tools/store-assets.js"
   },
   "engines": {
