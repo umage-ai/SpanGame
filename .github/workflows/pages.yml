@@ -1,6 +1,7 @@
 # pwa: deploy SPAN to GitHub Pages on every push/merge to main and on release tags (v*).
 # Pages must be enabled once in the repo (Settings > Pages > Source: "GitHub Actions").
-# Only the shipped game is published (index.html, sw.js, manifest, css/, js/, assets/) - never tools/.
+# Only the shipped game is published (index.html, sw.js, manifest, css/, js/, assets/) plus privacy.html (the
+# app-store privacy policy) - never tools/.
 name: Deploy to GitHub Pages
 
 on:
@@ -42,7 +43,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir _site
-          cp -r index.html sw.js manifest.webmanifest css js assets _site/
+          cp -r index.html privacy.html sw.js manifest.webmanifest css js assets _site/
           touch _site/.nojekyll
 
       - uses: actions/configure-pages@v5

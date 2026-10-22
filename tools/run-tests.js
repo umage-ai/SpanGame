@@ -29,6 +29,7 @@ const NODE = [
   ['test-history.js', '--node-only'],
   ['test-i18n.js', '--node-only'], // i18n: dictionaries complete in every language, the hard-coded string lint, formatting
   ['test-i18n-content.js'], // i18n: level, famous, vehicle and generated texts in both languages
+  ['test-native.js'], // native: the web bundle the app shells ship, BG.Native, the Android project's guarantees (docs/NATIVE.md)
   ['test-about.js'], // about: the generated About-screen numbers (js/features/about-data.js) are present and well-formed
 ];
 const BROWSER = [

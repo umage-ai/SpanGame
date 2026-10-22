@@ -1,0 +1,39 @@
+# Google Play listing: English (en-US)
+
+## App name (max 30 characters)
+SPAN: Bridge Builder
+
+## Short description (max 80 characters)
+Build bridges, test them with real physics, and don't drop the bus.
+
+## Full description (max 4000 characters)
+Bridge the gap. Mind the budget. Don't drop the bus.
+
+SPAN is a physics bridge-building puzzle game. Build a bridge across a gap from road, wood, steel, rope and cable, stay under budget, then press Test and watch cars, buses, trains and 60-tonne haulers drive across. Every member bends, stretches and can snap: real physics decides whether your bridge holds.
+
+102 HAND-MADE LEVELS
+• Roads: 50 levels in six chapters, from a 10 m creek crossed with two planks to a 150 m span carrying tankers, plus three hidden bonus chapters: the Jungle (bamboo, lianas, monkeys and canoes), the Anchorages and the Forces of Nature (hurricanes, earthquakes, a galloping deck).
+• Iron Road: 20 railway bridges, from handcars and trams to 2000-tonne ore trains and high-speed expresses. Trains are fussy: a kink in the track derails them.
+• Famous Bridges: rebuild 12 real bridges, from the Pont du Gard to the Millau Viaduct, each with the story of why the engineers chose its shape.
+
+A NEW CROSSING EVERY DAY
+A Daily Challenge that is the same for everyone, plus an Endless mode of ever-harder crossings. Every generated level is proven solvable before you see it.
+
+STARS AND CHALLENGES
+Earn up to three stars by building cheaper, then go for the challenge stars: use as few members as possible, skip the steel, keep the stress low, build it symmetric.
+
+MADE FOR TOUCH
+Drag to build, pinch to zoom, a magnifier under your finger, undo and redo, mirror mode and ready-made templates to learn from.
+
+PLAYS OFFLINE, NO STRINGS
+No ads, no in-app purchases, no account, no data collected. The whole game is in the app and works without a connection. Your progress stays on your device.
+
+In English and Danish.
+
+SPAN is an open-source demo of agentic development by umage.ai: designed and built by AI agents directed by umage.ai. The source is on GitHub: github.com/umage-ai/SpanGame
+
+## Category
+Game → Puzzle
+
+## Tags (pick up to 5 in the console)
+Puzzle, Simulation, Construction, Physics, Offline

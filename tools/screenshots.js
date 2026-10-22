@@ -18,7 +18,7 @@ const args = process.argv.slice(2);
 const argVal = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const OUT = path.resolve(argVal('--out') || path.join(ROOT, 'docs', 'screenshots'));
 const ONLY = argVal('--only') ? argVal('--only').split(',') : null;
-fs.mkdirSync(OUT, { recursive: true });
+if (require.main === module) fs.mkdirSync(OUT, { recursive: true });
 
 const HREF = url.pathToFileURL(path.join(ROOT, 'index.html')).href;
 const sol = n => JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'solutions', 'level-' + String(n).replace(/^\d+/, d => d.padStart(2, '0')) + '.json'), 'utf8'));
@@ -296,7 +296,9 @@ function seedProgress() {
   localStorage.setItem('span.v1.progress', JSON.stringify({ levels, lastLevel: 23 }));
 }
 
-(async () => {
+// tools/store-assets.js reuses the deterministic page driver and the saved designs
+module.exports = { newPage, run, openWithDesign, startTest, sol, seedProgress, partial, setBrowser: b => { browser = b; } };
+if (require.main === module) (async () => {
   browser = await require('./browser').launch(chromium);
   for (const [name, fn] of Object.entries(SCENES)) {
     if (ONLY ? ONLY.indexOf(name) < 0 : name === 'probe') continue;

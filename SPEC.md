@@ -1173,6 +1173,17 @@ Full spec and the record of every deviation: [docs/challenges/SPEC-CHALLENGES.md
 - **Tests:** `tools/test-tree-anchors.js` (new), plus updates to test-goals, test-jungle, test-unlock, e2e, e2e-events
   and e2e-goals.
 
+## 22. Native app shells (feature/android)
+
+The Android app (`android/`, later an iOS app built with xtool) wraps the shipped game in a WebView. It doesn't fork the game: every app build bundles the current files with `tools/build-web-bundle.js`, which uses the precache list from `tools/gen-precache.js`. Contract:
+
+- the shell defines `window.SpanNative` (`getPlatform()`, `getVersion()`, `saveFile(name, text)`) before any game script runs;
+- the shell calls `BG.Native.back()` (true = handled; false = leave the app), `pause()`, `resume()` and `saved(ok)` (`js/features/native.js`);
+- with a shell, `BG.PWA.supported` is false (no service worker) and `isStandalone()` is true;
+- the Android origin `https://appassets.androidplatform.net/assets/www/` is fixed forever, because `localStorage` saves live on it.
+
+Details, builds, signing and the iOS plan: [docs/NATIVE.md](docs/NATIVE.md). Tests: `tools/test-native.js`.
+
 ## 23. Level numbers players see (fix/level-numbering)
 
 Ids are permanent (saves, designs, history and badges are keyed by them). The number on tiles, chapter headers, the level badge, lock texts and toasts comes from `BG.Storage.levelNumber(levels, level)`:

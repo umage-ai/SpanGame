@@ -1,0 +1,91 @@
+// SPAN Android app. The game itself is not copied into this folder: every build runs
+// tools/build-web-bundle.js first (the webBundle task), so the app always ships the current game.
+// Version name = package.json "version"; version code = major*10000 + minor*100 + patch
+// (override with -PversionCode=N or SPAN_VERSION_CODE for a re-upload of the same version).
+// Release signing comes from SPAN_KEYSTORE, SPAN_KEYSTORE_PASSWORD, SPAN_KEY_ALIAS, SPAN_KEY_PASSWORD (docs/NATIVE.md).
+import groovy.json.JsonSlurper
+
+plugins {
+    id 'com.android.application'
+}
+
+def repoRoot = rootProject.file('..')
+def pkg = new JsonSlurper().parse(new File(repoRoot, 'package.json'))
+def semver = pkg.version.tokenize('.').collect { (it =~ /^\d+/)[0] as int }
+def spanVersionCode = (project.findProperty('versionCode') ?: System.getenv('SPAN_VERSION_CODE') ?: (semver[0] * 10000 + semver[1] * 100 + semver[2])) as int
+def genDir = new File(layout.buildDirectory.get().asFile, 'generated/span')
+def nodeExe = project.findProperty('nodeExe') ?: 'node'
+def keystore = System.getenv('SPAN_KEYSTORE')
+
+android {
+    namespace = 'ai.umage.span'
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = 'ai.umage.span'
+        minSdk = 26
+        targetSdk = 36
+        versionCode = spanVersionCode
+        versionName = pkg.version
+    }
+
+    signingConfigs {
+        if (keystore) {
+            release {
+                storeFile = file(keystore)
+                storePassword = System.getenv('SPAN_KEYSTORE_PASSWORD')
+                keyAlias = System.getenv('SPAN_KEY_ALIAS')
+                keyPassword = System.getenv('SPAN_KEY_PASSWORD') ?: System.getenv('SPAN_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix = '.debug'
+            versionNameSuffix = '-debug'
+            resValue 'string', 'app_name', 'SPAN dev'
+        }
+        release {
+            minifyEnabled = false
+            resValue 'string', 'app_name', 'SPAN'
+            if (keystore) signingConfig = signingConfigs.release
+        }
+    }
+
+    sourceSets {
+        main {
+            assets.srcDir new File(genDir, 'assets')
+            res.srcDir new File(genDir, 'res')
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.14.0'
+}
+
+// the game: the PWA's file list, copied into assets/www
+def webBundle = tasks.register('webBundle', Exec) {
+    description = 'Copies the current game into the app (tools/build-web-bundle.js).'
+    def out = new File(genDir, 'assets/www')
+    inputs.files(['index.html', 'manifest.webmanifest', 'package.json', 'tools/build-web-bundle.js', 'tools/gen-precache.js'].collect { new File(repoRoot, it) })
+    inputs.files(fileTree(new File(repoRoot, 'css')), fileTree(new File(repoRoot, 'js')), fileTree(new File(repoRoot, 'assets')))
+    outputs.dir(out)
+    workingDir repoRoot
+    commandLine nodeExe, 'tools/build-web-bundle.js', out.path, '--platform', 'android'
+}
+
+// the launcher icon art: the PWA's maskable icon (res/drawable/ic_launcher_fg.xml insets it for the adaptive icon)
+def appIcon = tasks.register('appIcon', Copy) {
+    description = 'Copies the app icon from assets/icons/app.'
+    from(new File(repoRoot, 'assets/icons/app/icon-maskable-512.png')) { rename { 'ic_launcher_art.png' } }
+    into new File(genDir, 'res/drawable-nodpi')
+}
+
+tasks.named('preBuild') { dependsOn webBundle, appIcon }
