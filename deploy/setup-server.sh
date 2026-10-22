@@ -6,7 +6,7 @@
 #   - https://span.studio.umage.ai       -> /var/www/span       (production: published GitHub releases)
 #   - https://test.span.studio.umage.ai  -> /var/www/span-test  (test: every push to main)
 #   - Let's Encrypt certificates for both (certbot), http -> https redirects
-# Safe to run again.
+# Safe to run again (it rewrites both site files and reinstalls the existing certificates).
 set -euo pipefail
 
 PUBKEY="${1:-${PUBKEY:-}}"
@@ -53,7 +53,6 @@ server {
     error_log /var/log/nginx/$NAME.error.log;
 
     charset utf-8;
-    types { application/manifest+json webmanifest; }
     gzip on;
     gzip_types text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml;
 
@@ -63,7 +62,15 @@ server {
         add_header Cache-Control "no-cache" always;
         add_header X-Content-Type-Options nosniff always;
     }
-    location ~ \.(html|webmanifest)\$ {
+    location ~ \.html\$ {
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options nosniff always;
+    }
+    # nginx's stock mime.types lacks .webmanifest: set it here only (a server-wide "types" block would replace the
+    # whole MIME table and serve html and js as application/octet-stream)
+    location ~ \.webmanifest\$ {
+        types { }
+        default_type application/manifest+json;
         add_header Cache-Control "no-cache" always;
         add_header X-Content-Type-Options nosniff always;
     }
@@ -83,7 +90,8 @@ systemctl reload nginx
 
 # --- certificates (adds the 443 server blocks and http -> https redirects to the site files)
 for DOMAIN in "${!SITES[@]}"; do
-  certbot --nginx -d "$DOMAIN" --redirect --non-interactive --agree-tos --register-unsafely-without-email \
+  # --keep-until-expiring: a re-run (which rewrites the site file above) reinstalls the existing certificate
+  certbot --nginx -d "$DOMAIN" --redirect --keep-until-expiring --non-interactive --agree-tos --register-unsafely-without-email \
     || echo "!! certbot failed for $DOMAIN: check that DNS points here, then run: certbot --nginx -d $DOMAIN --redirect"
 done
 
