@@ -163,3 +163,20 @@
 .m-phone.m-landscape .abt-umage-logo { height: 26px; }
 .m-phone.m-landscape .abt-intro { padding-top: 12px; }
 .m-lowperf .abt-title-btn { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ---- the umage.ai Studio lockup, as on studio.umage.ai and in Prismwright: the official white umage.ai logo, then the
+   tilted amber pixel "STUDIO" badge (Press Start 2P, self-hosted for offline play: assets/fonts/credits.txt) */
+@font-face { font-family: 'Press Start 2P'; src: url('../assets/fonts/press-start-2p-latin.woff2') format('woff2'); font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F; }
+.studio-lockup { display: inline-flex; align-items: center; gap: .7em; }
+.studio-badge { font-family: 'Press Start 2P', ui-monospace, monospace; font-size: .58em; letter-spacing: .1em; line-height: 1; font-weight: 400;
+  padding: .55em .85em .48em; border-radius: 6px; color: #2b1300; background: linear-gradient(180deg, #ffd27a, #ffb547);
+  box-shadow: 0 0 18px rgba(255, 181, 71, .35); transform: rotate(-3deg); text-transform: uppercase; white-space: nowrap; }
+.abt-presents-lockup { font-size: 17px; }
+.abt-presents-word { font-family: 'Press Start 2P', ui-monospace, monospace; font-size: 10px; font-weight: 400; letter-spacing: .12em; color: #e6cfa6;
+  text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
+.abt-presents-word::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #ffb547; box-shadow: 0 0 10px #ffb547; }
+.abt-presents:hover .studio-badge, .abt-presents:focus-visible .studio-badge,
+.abt-umage:hover .studio-badge, .abt-umage:focus-visible .studio-badge { box-shadow: 0 0 26px rgba(255, 181, 71, .7); }
+.abt-umage-lockup { font-size: 19px; }
+.abt-link.btn-primary .ico { color: currentColor; }

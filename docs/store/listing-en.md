@@ -31,7 +31,7 @@ No ads, no in-app purchases, no account, no data collected. The whole game is in
 
 In English and Danish.
 
-SPAN is a demo of agentic development by umage.ai: designed and built by AI agents directed by umage.ai.
+SPAN is a umage.ai Studio game, designed and built by AI agents directed by umage.ai. More games at studio.umage.ai.
 
 ## Category
 Game → Puzzle

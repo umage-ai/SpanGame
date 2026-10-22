@@ -2,7 +2,7 @@
   "id": "./",
   "name": "SPAN — Bridge Builder",
   "short_name": "SPAN",
-  "description": "A physics bridge-construction puzzle game: build across the gap, stay under budget, don't drop the bus.",
+  "description": "A physics bridge-construction puzzle game: build across the gap, stay under budget, don't drop the bus. A umage.ai Studio game.",
   "start_url": "./index.html?source=pwa",
   "scope": "./",
   "display": "fullscreen",

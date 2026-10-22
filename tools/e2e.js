@@ -92,7 +92,8 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
       btn: !!(b && b.getBoundingClientRect().width > 30 && +getComputedStyle(b).opacity > 0.9), btnText: b && b.textContent.trim(), btnWant: BG.i18n.t('features.about.button'),
       logoAbove: !!(p && p.getBoundingClientRect().bottom <= document.querySelector('.logo-art').getBoundingClientRect().top + 4) };
   });
-  ok('title: "umage.ai presents" above the logo, linking to umage.ai in a new tab', AB.href === 'https://umage.ai' && AB.target === '_blank' && /noopener/.test(AB.rel) && AB.img && AB.alt === 'umage.ai' && AB.text === AB.want && AB.shown && AB.logoAbove, AB);
+  // the umage.ai Studio lockup (logo + STUDIO badge) and "presents", linking to SPAN's page on studio.umage.ai
+  ok('title: "umage.ai Studio presents" above the logo, linking to studio.umage.ai in a new tab', /^https:\/\/studio\.umage\.ai\/(da\/spil|games)\/span\/$/.test(AB.href) && AB.target === '_blank' && /noopener/.test(AB.rel) && AB.img && AB.alt === 'umage.ai' && /^STUDIO/.test(AB.text) && AB.text.endsWith(AB.want) && AB.shown && AB.logoAbove, AB);
   ok('title: About button shown', AB.btn && AB.btnText === AB.btnWant, AB);
   ok('title: credit and About clear the buttons and chips (' + VW + 'x' + VH + ')', (await titleClear()).length === 0, await titleClear());
   await page.setViewportSize({ width: 1024, height: 640 }); await page.waitForTimeout(250);
@@ -103,7 +104,7 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
   const AM = await page.evaluate(() => {
     const m = document.querySelector('#about'), D = BG.AboutData, t = (k, p) => BG.i18n.t(k, p);
     const links = Array.from(m.querySelectorAll('a[href]')).map(a => ({ href: a.getAttribute('href'), target: a.target, rel: a.rel, id: a.dataset.alink || a.className.split(' ')[0] }));
-    const imgs = Array.from(m.querySelectorAll('img')).map(i => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0, link: !!i.closest('a[href="https://umage.ai"]') }));
+    const imgs = Array.from(m.querySelectorAll('img')).map(i => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0, link: !!i.closest('a[href="https://umage.ai"], a[href^="https://studio.umage.ai/"]') }));
     return { open: BG.About.isOpen() && m.classList.contains('show'), title: m.querySelector('.modal-head h3').textContent.trim(), wantTitle: t('features.about.title'),
       ver: m.querySelector('[data-aref=ver]').textContent, D: D && { version: D.version, levels: D.levels }, tiles: m.querySelectorAll('.abt-stat').length,
       tileValues: [...m.querySelectorAll('.abt-stat b')].map(b => b.textContent), agents: (BG.AboutData && BG.AboutData.agentic || {}).agents, steps: m.querySelectorAll('.abt-step').length, links, imgs,
@@ -111,11 +112,11 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
   });
   ok('About opens from the title', AM.open && AM.title === AM.wantTitle && AM.state === 'title', AM.title);
   ok('About: version and numbers from BG.AboutData', AM.D && AM.ver === AM.D.version && /^v\d+\.\d+/.test(AM.ver) && AM.tiles >= 6 && AM.tileValues.includes(String(AM.D.levels)) && (!AM.agents || AM.tileValues[0] === String(AM.agents)) && AM.steps === 5, { ver: AM.ver, D: AM.D, tiles: AM.tiles, tileValues: AM.tileValues, steps: AM.steps });
-  const want = { 'https://umage.ai': 1, 'https://github.com/umage-ai/SpanGame': 1, 'https://github.com/umage-ai/SpanGame/tree/main/docs': 1, 'https://github.com/umage-ai/SpanGame/issues': 1,
-    'https://github.com/umage-ai/SpanGame/blob/main/LICENSE': 1, ['https://github.com/umage-ai/SpanGame/releases/tag/' + (AM.D && AM.D.version)]: 1 };
-  ok('About: links to umage.ai, source, docs, issues, license and these release notes', Object.keys(want).every(h => AM.links.some(l => l.href === h)) && AM.links.every(l => /^https:\/\//.test(l.href)), AM.links.map(l => l.href));
-  ok('About: every link opens a new tab (rel=noopener)', AM.links.length >= 8 && AM.links.every(l => l.target === '_blank' && /noopener/.test(l.rel)), AM.links.filter(l => l.target !== '_blank' || !/noopener/.test(l.rel)));
-  ok('About: the umage.ai logos load and each one links to umage.ai', AM.imgs.length >= 2 && AM.imgs.every(i => i.ok && i.link && /^assets\/brand\/umage-ai-/.test(i.src)), AM.imgs);
+  const studioPage = LANG === 'da' ? 'https://studio.umage.ai/da/spil/span/' : 'https://studio.umage.ai/games/span/';
+  const want = { [studioPage]: 1, 'https://umage.ai': 1, 'https://span.studio.umage.ai/privacy.html': 1 };
+  ok('About: links to the studio page, umage.ai and the privacy policy, none to GitHub', Object.keys(want).every(h => AM.links.some(l => l.href === h)) && AM.links.every(l => /^https:\/\//.test(l.href) && !/github/.test(l.href)), AM.links.map(l => l.href));
+  ok('About: every link opens a new tab (rel=noopener)', AM.links.length >= 4 && AM.links.every(l => l.target === '_blank' && /noopener/.test(l.rel)), AM.links.filter(l => l.target !== '_blank' || !/noopener/.test(l.rel)));
+  ok('About: the umage.ai logos load and each one links to umage.ai or studio.umage.ai', AM.imgs.length >= 2 && AM.imgs.every(i => i.ok && i.link && /^assets\/brand\/umage-ai-/.test(i.src)), AM.imgs);
   ok('About: call to action', AM.cta && AM.cta.indexOf(AM.ctaWant) >= 0, AM.cta);
   await shot('01c-about');
   await page.keyboard.press('Enter'); await page.waitForTimeout(250);
@@ -128,7 +129,7 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
     const t = k => BG.i18n.t(k);
     const r = { title: m.querySelector('.modal-head h3').textContent.trim(), want: t('features.about.title'), eyebrow: m.querySelector('.abt-eyebrow').textContent, wantEyebrow: t('features.about.eyebrow'),
       linesLbl: Array.from(m.querySelectorAll('.abt-stat span')).map(s => s.textContent), wantLines: t('features.about.stat.lines'), before,
-      presents: document.querySelector('.abt-presents span').textContent, wantPresents: t('features.about.presents'),
+      presents: document.querySelector('.abt-presents-word').textContent, wantPresents: t('features.about.presents'),
       setRow: document.querySelector('.abt-set-row span').textContent.trim(), notes: (m.querySelector('[data-alink=notes]') || {}).textContent };
     BG.i18n.setLanguage(from);
     r.back = m.querySelector('.modal-head h3').textContent.trim() === BG.i18n.t('features.about.title');

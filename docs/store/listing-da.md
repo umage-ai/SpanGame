@@ -33,4 +33,4 @@ Ingen reklamer, ingen køb i appen, ingen konto, ingen dataindsamling. Hele spil
 
 På dansk og engelsk.
 
-SPAN er et eksempel på agentisk udvikling fra umage.ai: designet og bygget af AI-agenter under ledelse af umage.ai.
+SPAN er et spil fra umage.ai Studio, designet og bygget af AI-agenter under ledelse af umage.ai. Flere spil på studio.umage.ai.

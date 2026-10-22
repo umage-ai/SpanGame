@@ -1,0 +1,3 @@
+press-start-2p-latin.woff2: "Press Start 2P" by CodeMan38 (Cody "CodeMan38" Boisclair), SIL Open Font License 1.1
+(https://openfontlicense.org). Latin subset (includes ÆØÅ), self-hosted for offline play. Used only for the
+"STUDIO" badge and the "presents" eyebrow of the umage.ai Studio lockup (css/about.css), as on studio.umage.ai.
