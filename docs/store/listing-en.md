@@ -7,6 +7,7 @@ SPAN: Bridge Builder
 Build bridges, test them with real physics, and don't drop the bus.
 
 ## Full description (max 4000 characters)
+> Paste from [full-description-en.txt](full-description-en.txt), which keeps the line breaks.
 Bridge the gap. Mind the budget. Don't drop the bus.
 
 SPAN is a physics bridge-building puzzle game. Build a bridge across a gap from road, wood, steel, rope and cable, stay under budget, then press Test and watch cars, buses, trains and 60-tonne haulers drive across. Every member bends, stretches and can snap: real physics decides whether your bridge holds.
@@ -30,7 +31,7 @@ No ads, no in-app purchases, no account, no data collected. The whole game is in
 
 In English and Danish.
 
-SPAN is an open-source demo of agentic development by umage.ai: designed and built by AI agents directed by umage.ai. The source is on GitHub: github.com/umage-ai/SpanGame
+SPAN is a demo of agentic development by umage.ai: designed and built by AI agents directed by umage.ai.
 
 ## Category
 Game → Puzzle

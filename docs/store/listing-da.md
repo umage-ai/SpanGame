@@ -9,6 +9,7 @@ SPAN: Brobygger
 Byg broer, test dem med ægte fysik – og tab ikke bussen.
 
 ## Fuld beskrivelse (maks. 4000 tegn)
+> Indsæt fra [full-description-da.txt](full-description-da.txt), som bevarer linjeskiftene.
 Slå bro over kløften. Hold budgettet. Tab ikke bussen.
 
 SPAN er et fysikpuslespil om at bygge broer. Byg en bro over en kløft af vej, træ, stål, reb og kabel, hold dig inden for budgettet, og tryk så på Test og se biler, busser, tog og 60-tons sættevogne køre over. Hver bjælke bøjer, strækker sig og kan knække: ægte fysik afgør, om din bro holder.
@@ -32,4 +33,4 @@ Ingen reklamer, ingen køb i appen, ingen konto, ingen dataindsamling. Hele spil
 
 På dansk og engelsk.
 
-SPAN er et open source-eksempel på agentisk udvikling fra umage.ai: designet og bygget af AI-agenter under ledelse af umage.ai. Kildekoden ligger på GitHub: github.com/umage-ai/SpanGame
+SPAN er et eksempel på agentisk udvikling fra umage.ai: designet og bygget af AI-agenter under ledelse af umage.ai.
