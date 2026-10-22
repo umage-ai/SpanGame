@@ -4,8 +4,8 @@ A checklist for publishing `ai.umage.span`, with suggested answers. The app fact
 
 ## Before you start (owner)
 
-- [ ] **Developer account** ($25 one-time). An *organization* account (umage.ai, which needs a free D-U-N-S number) shows umage.ai as the developer and skips the closed-test rule. A *personal* account must first run a **closed test with at least 12 testers for 14 days in a row** before it can apply for production.
-- [ ] **Upload key** and the four GitHub secrets (see NATIVE.md). Then publish a GitHub release, or run the *Android app* workflow, to get a signed `span-<version>.aab`.
+- [x] **Developer account** ($25 one-time). An *organization* account (umage.ai, which needs a free D-U-N-S number) shows umage.ai as the developer and skips the closed-test rule. A *personal* account must first run a **closed test with at least 12 testers for 14 days in a row** before it can apply for production.
+- [x] **Upload key** and the four GitHub secrets (see NATIVE.md). Every published GitHub release attaches a signed `span-<version>.aab` (or run the *Android app* workflow by hand).
 - [ ] Create the app: name **SPAN: Bridge Builder**, default language English (United States), **Game**, **Free**.
 - [ ] Turn on **Play App Signing**, and upload the AAB to *Internal testing* first.
 
@@ -15,9 +15,9 @@ A checklist for publishing `ai.umage.span`, with suggested answers. The app fact
 |---|---|
 | App name, short and full description | [listing-en.md](listing-en.md), [listing-da.md](listing-da.md) (add Danish as a translation) |
 | App icon 512 × 512 | `screenshots/icon-512.png` |
-| Feature graphic 1024 × 500 | `screenshots/feature-graphic.png` |
-| Phone screenshots (2–8) | `screenshots/phone-*.png` |
-| 7" and 10" tablet screenshots | `screenshots/tablet7-*.png`, `screenshots/tablet10-*.png` |
+| Feature graphic 1024 × 500 | `screenshots/feature-graphic.jpg` |
+| Phone screenshots (2–8) | `screenshots/phone-*.jpg` (1920 × 1080) |
+| 7" and 10" tablet screenshots | `screenshots/tablet7-*.jpg` (1920 × 1200), `screenshots/tablet10-*.jpg` (2560 × 1600) |
 | Category | Game → Puzzle |
 | Contact email | the address players and Google should use (required) |
 | Website | https://span.studio.umage.ai/ |
