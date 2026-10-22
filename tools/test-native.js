@@ -118,5 +118,20 @@ function load(shell, game) {
   ok('android: the bridge is window.SpanNative', /addJavascriptInterface\(new Bridge\(\), "SpanNative"\)/.test(activity));
 }
 
+// ---------------------------------------------------------------- the iOS project
+{
+  const I = p => fs.readFileSync(path.join(ROOT, 'ios', p), 'utf8');
+  const handler = I('SPAN/Sources/AppSchemeHandler.swift');
+  const vc = I('SPAN/Sources/GameViewController.swift');
+  const proj = I('project.yml');
+  const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
+  ok('ios: fixed origin span-app://localhost, so saves survive updates', /static let scheme = "span-app"/.test(handler) && /static let host = "localhost"/.test(handler) && handler.includes('URL(string: "span-app://localhost/index.html")'));
+  ok('ios: window.SpanNative is defined before any game script runs', /injectionTime: \.atDocumentStart/.test(vc) && vc.includes("getPlatform: function () { return 'ios'; }") && vc.includes('messageHandlers.spanSave'));
+  ok('ios: the shell drives BG.Native pause / resume / saved', ['BG.Native.pause()', 'BG.Native.resume()', 'BG.Native.saved('].every(x => vc.includes(x)));
+  ok('ios: the game ships as the generated www folder (bundle step, folder reference)', /path: SPAN\/www\s+type: folder/.test(proj) && pkg.includes('"ios:bundle": "node tools/build-web-bundle.js ios/SPAN/www --platform ios"'));
+  ok('ios: universal (iPhone + iPad) and offered on Apple Silicon Macs', proj.includes('TARGETED_DEVICE_FAMILY: "1,2"') && proj.includes('SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES'));
+  ok('ios: no permission usage strings (no camera, location, network)', !/NS\w+UsageDescription|NSAppTransportSecurity/.test(proj));
+}
+
 console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nall native checks passed');
 process.exit(fails ? 1 : 0);

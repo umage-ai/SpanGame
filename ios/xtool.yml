@@ -1,0 +1,4 @@
+# xtool project config (https://github.com/xtool-org/xtool). The app's SwiftPM product is read from Package.swift.
+# Keys are minimal; check them against the xtool docs for your xtool version.
+version: 1
+bundleID: ai.umage.span
