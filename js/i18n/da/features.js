@@ -427,5 +427,10 @@
     'features.jungle.tree.editTip': 'Bøjer under last; rødderne giver slip, hvis der trækkes for hårdt. Bardunér det tilbage til en pløk.',
     'features.jungle.stake.name': 'Jordpløk',
     'features.jungle.stake.editTip': 'Bind en bardun her for at holde et træ oprejst.',
+    'features.moved.title': 'SPAN er flyttet til span.studio.umage.ai.',
+    'features.moved.text': 'Dine fremskridt er gemt i denne browser på denne adresse: eksportér dem her (Indstillinger → Gemte data), og importér filen på det nye websted.',
+    'features.moved.open': 'Gå til det nye websted',
+    'features.moved.export': 'Eksportér fremskridt',
+    'features.moved.later': 'Senere',
   });
 })(typeof window !== 'undefined' ? window : globalThis);

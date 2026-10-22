@@ -1,0 +1,95 @@
+# Deploys the web game to our own server (Ubuntu + nginx, set up once with deploy/setup-server.sh; docs/DEPLOY.md):
+#  - every push to main          -> https://test.span.studio.umage.ai   (/var/www/span-test)
+#  - a published GitHub release  -> https://span.studio.umage.ai        (/var/www/span)
+#  - a manual run                -> either, chosen when starting it
+# Only the shipped game is copied (index.html, privacy.html, sw.js, manifest, css/, js/, assets/), never tools/ or docs/.
+# Repository secrets: DEPLOY_SSH_KEY (the deployspan private key) and DEPLOY_KNOWN_HOSTS (the server's host keys).
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Where to deploy
+        type: choice
+        options: [test, production]
+        default: test
+
+permissions:
+  contents: read
+
+env:
+  DEPLOY_HOST: studio.umage.ai
+  DEPLOY_USER: deployspan
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # one deploy per target at a time; a newer push replaces a queued one
+    concurrency:
+      group: deploy-${{ github.event_name == 'release' && 'production' || inputs.target || 'test' }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Target
+        run: |
+          TARGET="${{ github.event_name == 'release' && 'production' || inputs.target || 'test' }}"
+          if [ "$TARGET" = production ]; then
+            echo "SITE=https://span.studio.umage.ai" >> "$GITHUB_ENV"; echo "WEBROOT=/var/www/span" >> "$GITHUB_ENV"
+          else
+            echo "SITE=https://test.span.studio.umage.ai" >> "$GITHUB_ENV"; echo "WEBROOT=/var/www/span-test" >> "$GITHUB_ENV"
+          fi
+          echo "Deploying to $TARGET"
+
+      # every Node-only suite (dependency-free; the browser tests need Chrome and run locally)
+      - name: Node test suites
+        run: npm test
+
+      # refresh the service worker's precache list + version so the deploy always matches its files
+      - name: Generate precache
+        run: node tools/gen-precache.js
+
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp -r index.html privacy.html sw.js manifest.webmanifest css js assets _site/
+
+      - name: SSH key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$DEPLOY_SSH_KEY" ] || [ -z "$DEPLOY_KNOWN_HOSTS" ]; then
+            echo "::error::DEPLOY_SSH_KEY / DEPLOY_KNOWN_HOSTS secrets are missing (docs/DEPLOY.md)"; exit 1
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deployspan
+          chmod 600 ~/.ssh/deployspan
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # everything but the service worker first, then the worker: a player who loads the page mid-deploy never gets a
+      # new worker pointing at files that are not there yet
+      - name: Upload
+        run: |
+          SSH="ssh -i $HOME/.ssh/deployspan -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          rsync -rlz --delete --chmod=D755,F644 --exclude sw.js -e "$SSH" _site/ "$DEPLOY_USER@$DEPLOY_HOST:$WEBROOT/"
+          rsync -rlz --chmod=F644 -e "$SSH" _site/sw.js "$DEPLOY_USER@$DEPLOY_HOST:$WEBROOT/sw.js"
+
+      - name: Check
+        run: |
+          curl -fsS -o /dev/null -w "index.html %{http_code}\n" "$SITE/"
+          curl -fsS "$SITE/sw.js" | grep -q "$(grep -o "VERSION = '[0-9a-f]*'" sw.js)" && echo "sw.js version matches the deploy"
+          echo "Deployed: $SITE"
+
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deployspan

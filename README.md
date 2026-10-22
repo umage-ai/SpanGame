@@ -4,7 +4,7 @@
 
 **An open-source demo of agentic development by [umage.ai](https://umage.ai).** SPAN was designed and built by AI agents (Claude Code) directed by umage.ai, from a written spec to tested releases. See [About SPAN](#about-span-an-umageai-demo).
 
-### ▶ [Play SPAN in your browser](https://umage-ai.github.io/SpanGame/)
+### ▶ [Play SPAN in your browser](https://span.studio.umage.ai/)
 Free, no install. Works on desktop, tablet and phone, and can be installed as an app that plays offline.
 
 **Build a bridge, send the traffic across, and watch real physics decide whether it holds.**
@@ -219,7 +219,7 @@ cd SpanGame
 - **With a local server** (needed for the PWA features): `node tools/serve.js [port]` serves the repo at `http://localhost:8080/`. It has no dependencies.
 - **Handy URL parameters:** `?level=12` opens level 12, `?screen=levels` opens the level select, `?unlockall` unlocks everything, `?daily` plays today's daily (`?daily=20261002` a given date), `?endless` continues the endless run, `?touchui=1` / `?touchui=0` forces the touch layout on or off, `?noresume` starts on the title screen, `?lang=da` / `?lang=en` picks the language for this visit.
 
-The live site at https://umage-ai.github.io/SpanGame/ is deployed by [.github/workflows/pages.yml](.github/workflows/pages.yml) on every push to `main` and on `v*` tags. It runs the physics and level checks, refreshes the service worker's precache list and publishes only the game files.
+The live site at https://span.studio.umage.ai/ is deployed by [.github/workflows/deploy.yml](.github/workflows/deploy.yml) to our own server (Ubuntu + nginx) when a GitHub release is published. Every push to `main` goes to the test site at https://test.span.studio.umage.ai/ first. It runs the Node test suites, refreshes the service worker's precache list and uploads only the game files. Server setup and secrets: [docs/DEPLOY.md](docs/DEPLOY.md). The old address, umage-ai.github.io/SpanGame, still runs from [.github/workflows/pages.yml](.github/workflows/pages.yml) during the move and shows a "SPAN has moved" banner with a save export (`js/features/moved.js`).
 
 ## Tests
 

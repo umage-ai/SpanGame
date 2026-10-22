@@ -426,5 +426,10 @@
     'features.jungle.tree.editTip': 'Bends under load; its roots give way if pulled too hard. Guy it back to a stake.',
     'features.jungle.stake.name': 'Ground stake',
     'features.jungle.stake.editTip': 'Tie a guy rope here to hold a tree upright.',
+    'features.moved.title': 'SPAN has moved to span.studio.umage.ai.',
+    'features.moved.text': 'Your progress is saved in this browser at this address: export it here (Settings → Save data), then import the file on the new site.',
+    'features.moved.open': 'Go to the new site',
+    'features.moved.export': 'Export progress',
+    'features.moved.later': 'Later',
   });
 })(typeof window !== 'undefined' ? window : globalThis);
