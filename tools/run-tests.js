@@ -14,6 +14,7 @@ const NODE = [
   ['test-jungle.js', '--node-only'], // jungle visuals: themes, sprite tables, cameo rule, level rules (js/features/jungle-fx.js)
   ['verify-levels.js'],
   ['test-editor.js'],
+  ['test-arch-tool.js', '--node-only'], // Arch & Curve tool: geometry, the editor gesture, joints on the editor's grid (SPEC §18)
   ['test-unlock.js'],
   ['test-templates.js'],
   ['test-railinfo.js'],
@@ -47,6 +48,7 @@ const BROWSER = [
   ['test-offline-tour.js', '--no-shots'],
   ['test-i18n.js', '--browser-only'],
   ['test-prefs.js'], // speed + follow remembered across levels/reloads; arch button toggles back to build
+  ['test-arch-tool.js'], // Arch & Curve tool in the browser: the bar, real drags, arches that pass their levels
   ['test-i18n-ui.js'], // i18n: the in-level HUD, results card, ride card and derail callout switch language in place
 ];
 

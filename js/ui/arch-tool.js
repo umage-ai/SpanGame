@@ -29,7 +29,8 @@
   const P = Editor.prototype;
   const C = () => BG.Curves;
 
-  const GRID = 0.25;          // m: interior joints and the rise snap to this grid
+  const GRID = 0.25;          // m: the rise and the joints' heights snap to this grid; the joints' x follows the editor's
+                              //    grid (editor._grid: 1 m, 0.25 m with Shift), straight above / below the deck joints
   const MIN_CHORD = 1;        // m: shortest start-end distance for a curve
   const REUSE = 0.3;          // m: an interior curve joint this close to an existing joint uses that joint
   const DECK_REUSE = 1.0;     // m (horizontal): a connector lands on an existing deck joint this close
@@ -191,7 +192,7 @@
     s.touch = o.pointerType === 'touch';
     if (s.phase === 'idle') {
       const a = this._archEndpoint(x, y, o, null);
-      this._arch = { phase: 'drag', a, b: a, rise: 0, n: 0, touch: s.touch, sx: x, sy: y, moved: false };
+      this._arch = { phase: 'drag', a, b: a, rise: 0, n: 0, touch: s.touch, sx: x, sy: y, moved: false, grid: this._grid(o) };
       this._sfx('click');
     } else if (s.phase === 'end') {
       s.phase = 'drag';
@@ -208,6 +209,7 @@
   P._archMove = function (x, y, o) {
     const s = this._arch;
     if (!s || s.phase === 'idle') return;
+    s.grid = this._grid(o); // Shift held or released mid-gesture: the preview follows
     const thr = this._px(5 * (o.pointerType === 'touch' ? 2 : 1));
     if (s.phase === 'drag' || s.phase === 'end') {
       if (s.phase === 'drag' && !s.moved && hyp(x - s.sx, y - s.sy) > thr) s.moved = true;
@@ -229,6 +231,7 @@
   P._archUp = function (x, y, o) {
     const s = this._arch;
     if (!s || s.phase === 'idle') return;
+    s.grid = this._grid(o);
     if (s.phase === 'drag') {
       if (s.moved) s.b = this._archEndpoint(x, y, o, s.a.id);
       const chord = s.b ? hyp(s.b.x - s.a.x, s.b.y - s.a.y) : 0;
@@ -309,7 +312,9 @@
     const flip = b.x < a.x - 1e-9;
     const L = flip ? b : a, R = flip ? a : b;
     const curve = Cv.make(OPT.shape, L.x, L.y, R.x, R.y, rise);
-    const so = { maxLen: maxLenOf(m), grid: GRID, n: n || 0 };
+    // joints: x on the editor's grid (1 m, or 0.25 m with Shift) so posts and hangers to the deck joints stand straight;
+    // y on 0.25 m so the arch stays smooth
+    const so = { maxLen: maxLenOf(m), grid: { x: (this._arch && this._arch.grid) || 1, y: GRID }, n: n || 0 };
     let seg = null;
     if (OPT.connect) {
       const st = this._archStations(L.x, R.x, curve);
@@ -612,7 +617,7 @@
     if (o.brace != null) OPT.brace = !!o.brace;
     const a = this._archEndpoint(x0, y0, o, null);
     const b = this._archEndpoint(x1, y1, o, a.id);
-    this._arch = { phase: 'rise', a, b, rise: snap(rise, GRID), n: o.n || 0, touch: false };
+    this._arch = { phase: 'rise', a, b, rise: snap(rise, GRID), n: o.n || 0, touch: false, grid: o.grid || this._grid(o) };
     const ok = this._archCommit();
     if (!ok) this._archReset();
     return ok ? this.lastArch : null;

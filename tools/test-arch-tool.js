@@ -212,6 +212,9 @@ section('editor: drag, release, rise, click (mouse)');
   ok(ed.design.beams.length === nMin && ed.design.beams.every((b) => b.m === 'steel'), nMin + ' steel members');
   ok(valid(ed).ok, 'design valid', valid(ed).errors);
   ok(ed.design.nodes.every((n) => onGrid(n.x, 0.25) && onGrid(n.y, 0.25)), 'joints on the grid');
+  // the joints' x follows the editor's grid (1 m without Shift), so posts and hangers from the deck joints stand straight
+  const archJoints = ed.lastArch.ids.slice(1, -1).map((id) => ed.design.nodes.find((n) => n.id === id)).filter(Boolean);
+  ok(archJoints.length > 0 && archJoints.every((n) => onGrid(n.x, 1)), 'arch joints on the 1 m grid points (x), like the build tool', archJoints.map((n) => n.x));
   ok(near(ed.cost - cost0, planCost, 1.5), 'cost rises by the previewed amount', [ed.cost - cost0, planCost]);
   ok(ed.undoStack.length === undo0 + 1 && game.changes > changes0, 'one undo step');
   ed.undo();
@@ -320,6 +323,16 @@ section('editor: interior joints join the deck; Connect to deck (posts, bracing,
   const rs = ed.placeArch(1, -6, 17, -6, 6, { n: 4 });
   const cr2 = rs && rs.ids.map((id) => ed._node(id)).find((n) => near(n.y, 0));
   ok(cr2 && near(cr2.x, 9) && ed.design.beams.filter((b) => (b.a === cr2.id || b.b === cr2.id) && b.m === 'road').length === 2 && valid(ed).ok, 'a curve joint on a deck beam splits it (joined)', cr2);
+  ed.undo();
+  // the joints' x follows the editor's grid: 1 m normally, the fine 0.25 m grid with Shift (the build tool's rule)
+  const xsOf = (res) => res.ids.slice(1, -1).map((id) => ed._node(id).x);
+  const coarse = ed.placeArch(0, -6, 23, -6, 5, { n: 6 });
+  const cx = coarse ? xsOf(coarse) : [];
+  ok(coarse && cx.length && cx.every((x) => onGrid(x, 1)) && valid(ed).ok, 'arch joints on the 1 m grid without Shift', cx);
+  ed.undo();
+  const fine = ed.placeArch(0, -6, 23, -6, 5, { n: 6, shift: true });
+  const fx = fine ? xsOf(fine) : [];
+  ok(fine && fx.length && fx.every((x) => onGrid(x, 0.25)) && fx.some((x) => !onGrid(x, 1)) && valid(ed).ok, 'with Shift: the fine 0.25 m grid', fx);
   ed.undo();
   // connect + brace
   opt.connect = true; opt.brace = true;

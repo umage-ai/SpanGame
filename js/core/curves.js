@@ -9,7 +9,9 @@
 //   BG.Curves.divide(c, n)            -> n + 1 points with (near) equal chord lengths, exact endpoints
 //   BG.Curves.segment(c, opts)        -> {n, nMin, points, lengths, maxSeg, ok}: the fewest segments (or opts.n)
 //                                        with every segment <= maxLen * (1 - margin) after the interior joints are
-//                                        snapped to the grid. opts: {maxLen, margin = 0.02, grid = 0.25, n, maxN}
+//                                        snapped to the grid. opts: {maxLen, margin = 0.02, grid = 0.25, n, maxN};
+//                                        grid may be {x, y} to snap the two axes to different grids (the Arch tool:
+//                                        x on the editor's grid, y on 0.25 m)
 //   BG.Curves.alignedSegment(c, xs, opts) -> the same, but with joints at the given x stations (deck joints) plus
 //                                        subdivisions where a chord would be too long; null if c is not y(x)
 //   BG.Curves.yAt(c, x)               -> the curve's height at x (null outside / where it overhangs)
@@ -26,6 +28,9 @@
 
   function hyp(x, y) { return Math.sqrt(x * x + y * y); }
   function snap(v, g) { return g > 0 ? Math.round(Math.round(v / g) * g * 10000) / 10000 : v; }
+  // a grid is a step in metres for both axes, or {x, y}
+  function gx(g) { return g && typeof g === 'object' ? g.x : g; }
+  function gy(g) { return g && typeof g === 'object' ? g.y : g; }
   function cosh(x) { return (Math.exp(x) + Math.exp(-x)) / 2; }
 
   /** catenary shape parameter k = halfSpan / c for a sag-to-half-span ratio r: (cosh k - 1) / k = r */
@@ -170,11 +175,11 @@
     const N = ideal.length;
     if (N < 3) return ideal.map((p) => ({ x: p.x, y: p.y }));
     // grid values around v: rounded down / up (wide: one more step either way, for a joint whose x is pinned)
-    const opts = (v, fix, wide) => {
-      if (fix || !(grid > 0)) return [v];
-      const lo = snap(Math.floor(v / grid + 1e-9) * grid, grid), hi = snap(Math.ceil(v / grid - 1e-9) * grid, grid);
+    const opts = (v, fix, wide, g) => {
+      if (fix || !(g > 0)) return [v];
+      const lo = snap(Math.floor(v / g + 1e-9) * g, g), hi = snap(Math.ceil(v / g - 1e-9) * g, g);
       const out = lo === hi ? [lo] : [lo, hi];
-      if (wide) { out.unshift(snap(lo - grid, grid)); out.push(snap(hi + grid, grid)); }
+      if (wide) { out.unshift(snap(lo - g, g)); out.push(snap(hi + g, g)); }
       return out;
     };
     // a mirror-symmetric curve gets mirror-symmetric ideal points (and ties broken toward the middle), so a
@@ -192,7 +197,7 @@
     const cands = pts.map((p, i) => {
       if (i === 0 || i === N - 1) return [{ x: p.x, y: p.y, cost: 0 }];
       const out = [];
-      for (const x of opts(p.x, p.fixX)) for (const y of opts(p.y, p.fixY, p.fixX)) {
+      for (const x of opts(p.x, p.fixX, false, gx(grid))) for (const y of opts(p.y, p.fixY, p.fixX, gy(grid))) {
         let cost = (x - p.x) * (x - p.x) + (y - p.y) * (y - p.y);
         if (c.shape !== 'circular') { const yc = yAt(c, x); if (yc != null) cost += (y - yc) * (y - yc); }
         cost += 1e-7 * Math.abs(x - midX); // ties: toward the middle (both halves alike)
@@ -242,7 +247,7 @@
     const pts = divide(c, n);
     const fair = fairSnap(c, pts, grid, opts);
     if (fair) return fair;
-    for (let i = 1; i < pts.length - 1; i++) pts[i] = { x: snap(pts[i].x, grid), y: snap(pts[i].y, grid) };
+    for (let i = 1; i < pts.length - 1; i++) pts[i] = { x: snap(pts[i].x, gx(grid)), y: snap(pts[i].y, gy(grid)) };
     return pts;
   }
 
@@ -310,7 +315,7 @@
     for (const q of xs) {
       const y = yAt(c, q.x);
       if (y == null) return null;
-      base.push(q.y != null ? { x: q.x, y: q.y, station: true, pinY: true } : { x: q.x, y: snap(y, grid), station: true });
+      base.push(q.y != null ? { x: q.x, y: q.y, station: true, pinY: true } : { x: q.x, y: snap(y, gy(grid)), station: true });
     }
     base.push({ x: c.x1, y: c.y1, end: true });
     const ok = (a, b) => { const l = hyp(b.x - a.x, b.y - a.y); return l <= limit + 1e-9 && l >= MIN_SEG - 1e-9; };
@@ -319,7 +324,7 @@
       for (let j = 1; j < k; j++) {
         const x = a.x + (b.x - a.x) * j / k, y = yAt(c, x);
         if (y == null) return null;
-        out.push({ x: snap(x, grid), y: snap(y, grid) });
+        out.push({ x: snap(x, gx(grid)), y: snap(y, gy(grid)) });
       }
       return out;
     };
@@ -344,9 +349,9 @@
       let bi = 1, bl = -1;
       for (let i = 1; i < pts.length; i++) { const l = hyp(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); if (l > bl) { bl = l; bi = i; } }
       const a = pts[bi - 1], b = pts[bi];
-      const x = snap((a.x + b.x) / 2, grid), y = yAt(c, (a.x + b.x) / 2);
+      const x = snap((a.x + b.x) / 2, gx(grid)), y = yAt(c, (a.x + b.x) / 2);
       if (y == null || bl < 2 * MIN_SEG) break;
-      pts.splice(bi, 0, { x, y: snap(y, grid) });
+      pts.splice(bi, 0, { x, y: snap(y, gy(grid)) });
     }
     pts[0] = { x: c.x0, y: c.y0 };
     pts[pts.length - 1] = { x: c.x1, y: c.y1 };
