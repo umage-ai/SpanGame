@@ -25,6 +25,7 @@
   const SHAPES = ['parabolic', 'circular', 'catenary'];
   const SAMPLES = 720;      // dense polyline used for arc length and equal-chord division
   const MIN_SEG = 0.5;      // m: shortest segment a snapped division may contain
+  const OFF_CURVE = 0.3;    // m: a snapped joint further than this from the curve looks like a wobble
 
   function hyp(x, y) { return Math.sqrt(x * x + y * y); }
   function snap(v, g) { return g > 0 ? Math.round(Math.round(v / g) * g * 10000) / 10000 : v; }
@@ -197,11 +198,17 @@
     const cands = pts.map((p, i) => {
       if (i === 0 || i === N - 1) return [{ x: p.x, y: p.y, cost: 0 }];
       const out = [];
-      for (const x of opts(p.x, p.fixX, false, gx(grid))) for (const y of opts(p.y, p.fixY, p.fixX, gy(grid))) {
-        let cost = (x - p.x) * (x - p.x) + (y - p.y) * (y - p.y);
-        if (c.shape !== 'circular') { const yc = yAt(c, x); if (yc != null) cost += (y - yc) * (y - yc); }
-        cost += 1e-7 * Math.abs(x - midX); // ties: toward the middle (both halves alike)
-        out.push({ x, y, cost });
+      for (const x of opts(p.x, p.fixX, false, gx(grid))) {
+        const yc = c.shape !== 'circular' ? yAt(c, x) : null;
+        // a coarser x grid moves the joint along a steep flank: offer the heights on the curve at that x too
+        const ys = opts(p.y, p.fixY, p.fixX, gy(grid));
+        if (yc != null && !p.fixY) for (const y of opts(yc, false, false, gy(grid))) if (ys.indexOf(y) < 0) ys.push(y);
+        for (const y of ys) {
+          let cost = (x - p.x) * (x - p.x) + (y - p.y) * (y - p.y);
+          if (yc != null) cost += (y - yc) * (y - yc);
+          cost += 1e-7 * Math.abs(x - midX); // ties: toward the middle (both halves alike)
+          out.push({ x, y, cost });
+        }
       }
       return out;
     });
@@ -267,12 +274,38 @@
     const so = { limit, minSeg: Math.min(MIN_SEG, c.length / 2) };
     for (; nMin <= maxN; nMin++) { pts = snapped(c, nMin, grid, so); if (good(pts)) break; }
     if (nMin > maxN) nMin = maxN;
+    // a coarse grid on a steep flank can only keep the chords short by pulling joints off the curve: a few more
+    // segments let every joint sit on it again (the fewest that do; else the shortest-chord count stands)
+    for (let k = nMin; k <= Math.min(maxN, nMin + 4); k++) {
+      const q = snapped(c, k, grid, so);
+      if (good(q) && q.every((p) => offCurve(c, p) <= OFF_CURVE) && mirrored(c, q)) { nMin = k; break; }
+    }
     let n = nMin;
     if (opts.n > 0) { n = Math.min(maxN, Math.max(1, Math.round(opts.n))); pts = snapped(c, n, grid, so); }
     else pts = snapped(c, n, grid, so);
     const lengths = lengthsOf(pts);
     const maxSeg = lengths.reduce((a, b) => Math.max(a, b), 0);
     return { n, nMin, points: pts, lengths, maxSeg, limit, ok: !!good(pts) && maxSeg <= maxLen + 1e-9 };
+  }
+
+  /** a symmetric curve's joints mirror each other (always true for an asymmetric curve) */
+  function mirrored(c, pts) {
+    if (Math.abs(c.y1 - c.y0) > 1e-9) return true;
+    const N = pts.length - 1, s = c.x0 + c.x1;
+    for (let i = 0; i <= N; i++) if (Math.abs(pts[i].x + pts[N - i].x - s) > 1e-6 || Math.abs(pts[i].y - pts[N - i].y) > 1e-6) return false;
+    return true;
+  }
+
+  /** distance from p to the curve (its dense polyline) */
+  function offCurve(c, p) {
+    const S = c.samples;
+    let best = Infinity;
+    for (let i = 1; i < S.length; i++) {
+      const a = S[i - 1], b = S[i], dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+      const t = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
+      best = Math.min(best, hyp(p.x - a.x - t * dx, p.y - a.y - t * dy));
+    }
+    return best;
   }
 
   /** height of the curve at x, or null when x is outside it / the curve overhangs (is not a function of x) */

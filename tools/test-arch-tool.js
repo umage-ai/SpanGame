@@ -95,6 +95,19 @@ section('geometry: equal chords, fewest segments, grid');
   }
 }
 
+section('geometry: 1 m x grid on steep flanks');
+{
+  const off = (c, p) => { let d = Infinity; for (let t = 0; t <= 1; t += 1e-4) { const q = c.at(t); d = Math.min(d, hyp(q.x - p.x, q.y - p.y)); } return d; };
+  for (const [span, rise] of [[72, 23.5], [60, 30], [36, 8.5], [26, 6]]) {
+    const c = Cv.make('parabolic', 0, 0, span, 0, rise);
+    const s = Cv.segment(c, { maxLen: 6, grid: { x: 1, y: 0.25 } });
+    const P = s.points, N = P.length - 1;
+    ok(s.ok && P.every((p) => onGrid(p.x, 1) && onGrid(p.y, 0.25)), span + '/' + rise + ': joints on the 1 m x / 0.25 m y grid', P);
+    ok(P.every((p) => off(c, p) <= 0.3 + 1e-3), span + '/' + rise + ': every joint within 0.3 m of the curve (no wobble)', P.map((p) => +off(c, p).toFixed(2)));
+    ok(P.every((p, i) => near(p.x + P[N - i].x, span) && near(p.y, P[N - i].y)), span + '/' + rise + ': still mirror-symmetric', P);
+  }
+}
+
 section('geometry: deck-aligned stations, parabola fit');
 {
   const c = Cv.make('parabolic', 0, -9, 36, -9, 8.5);
