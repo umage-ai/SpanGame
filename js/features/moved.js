@@ -14,10 +14,33 @@
   const loc = root.location || {};
   const forced = /[?&]moved\b/.test(loc.search || '');
   const active = !!doc && !root.SpanNative && (forced || OLD_HOSTS.indexOf(loc.hostname) >= 0);
-  const t = (k, p) => (BG.i18n && BG.i18n.t ? BG.i18n.t(k, p) : k);
+  // its own copy of the texts: an old service worker can serve this (new) file next to old, cached dictionaries
+  // that don't have these keys yet, and the returning players it serves are exactly who the banner is for
+  const OWN = {
+    en: {
+      'features.moved.title': 'SPAN has moved to span.studio.umage.ai.',
+      'features.moved.text': 'Your progress is saved in this browser at this address: export it here (Settings → Save data), then import the file on the new site.',
+      'features.moved.open': 'Go to the new site',
+      'features.moved.export': 'Export progress',
+      'features.moved.later': 'Later',
+    },
+    da: {
+      'features.moved.title': 'SPAN er flyttet til span.studio.umage.ai.',
+      'features.moved.text': 'Dine fremskridt er gemt i denne browser på denne adresse: eksportér dem her (Indstillinger → Gemte data), og importér filen på det nye websted.',
+      'features.moved.open': 'Gå til det nye websted',
+      'features.moved.export': 'Eksportér fremskridt',
+      'features.moved.later': 'Senere',
+    },
+  };
+  const t = (k) => {
+    const v = BG.i18n && BG.i18n.t ? BG.i18n.t(k) : k;
+    if (v && v !== k) return v;
+    const l = BG.i18n && BG.i18n.lang ? BG.i18n.lang() : (doc && doc.documentElement.lang) || 'en';
+    return (OWN[l] || OWN.en)[k] || OWN.en[k];
+  };
   const later = () => { try { return root.sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; } };
 
-  BG.Moved = { active, newSite: NEW_SITE };
+  BG.Moved = { active, newSite: NEW_SITE, texts: OWN };
   if (!active) return;
 
   function render(el) {

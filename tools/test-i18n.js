@@ -51,6 +51,11 @@ function tagsOf(v) {
 }
 function checkDictionaries() {
   console.log('\n--- 1. dictionaries');
+  // the moved banner keeps its own copy of its texts (old cached dictionaries may lack them): it must match
+  require(path.join(ROOT, 'js/features/moved.js'));
+  const own = BG.Moved.texts, drift = [];
+  LANGS.forEach(l => Object.keys(own.en).forEach(k => { if (!own[l] || own[l][k] !== I.dict[l][k]) drift.push(l + ' ' + k); }));
+  ok('moved banner: its own texts match the dictionaries', !drift.length, drift);
   const index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const missingFiles = [], notInIndex = [];
   LANGS.forEach(l => I18N_AREAS.forEach(a => {
