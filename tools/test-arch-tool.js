@@ -347,6 +347,14 @@ section('editor: interior joints join the deck; Connect to deck (posts, bracing,
   const fx = fine ? xsOf(fine) : [];
   ok(fine && fx.length && fx.every((x) => onGrid(x, 0.25)) && fx.some((x) => !onGrid(x, 1)) && valid(ed).ok, 'with Shift: the fine 0.25 m grid', fx);
   ed.undo();
+  {
+    // level 2: a free arch from the low bolts only fits between the 1 m lines (3 chords too long, 4 leave the build
+    // area): the tool falls back to the fine grid by itself, so touch (no Shift) can build it too
+    const f2 = fresh(levelById(2));
+    f2.ed.setTool('arch'); f2.ed.setMaterial('wood');
+    const r = f2.ed.placeArch(0, -3, 14, -3, 3.5, { connect: false });
+    ok(r && f2.ed.lastArch && f2.ed.lastArch.n >= 2, 'no grid that fits: falls back to the fine grid without Shift', f2.ed.lastArch);
+  }
   // connect + brace
   opt.connect = true; opt.brace = true;
   drag(ed, 0, -6, 24, -6);

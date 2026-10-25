@@ -472,7 +472,19 @@
     return { connectors, pairs };
   };
 
+  /** the plan on the editor's grid; when that can't be built (a short, steep arch whose joints only fit between the
+   *  1 m grid lines) the fine 0.25 m grid instead, so no one needs Shift (touch has none) */
   P._archPlan = function () {
+    const s = this._arch;
+    const plan = this._archPlanAt();
+    if (!plan || plan.valid || plan.reason === 'span_short' || !(s.grid > GRID)) return plan;
+    const g = s.grid;
+    s.grid = GRID;
+    const fine = this._archPlanAt();
+    s.grid = g;
+    return fine && fine.valid ? fine : plan;
+  };
+  P._archPlanAt = function () {
     const s = this._arch;
     if (!s || !s.a || !s.b || s.phase === 'idle') return null;
     const m = this._mat();
