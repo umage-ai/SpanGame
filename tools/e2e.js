@@ -113,7 +113,8 @@ const ok = (name, cond, info) => { results.push({ name, pass: !!cond, info }); c
   ok('About opens from the title', AM.open && AM.title === AM.wantTitle && AM.state === 'title', AM.title);
   ok('About: version and numbers from BG.AboutData', AM.D && AM.ver === AM.D.version && /^v\d+\.\d+/.test(AM.ver) && AM.tiles >= 6 && AM.tileValues.includes(String(AM.D.levels)) && (!AM.agents || AM.tileValues[0] === String(AM.agents)) && AM.steps === 5, { ver: AM.ver, D: AM.D, tiles: AM.tiles, tileValues: AM.tileValues, steps: AM.steps });
   const studioPage = LANG === 'da' ? 'https://studio.umage.ai/da/spil/span/' : 'https://studio.umage.ai/games/span/';
-  const want = { [studioPage]: 1, 'https://umage.ai': 1, 'https://span.studio.umage.ai/privacy.html': 1 };
+  const privacyPage = LANG === 'da' ? 'https://studio.umage.ai/da/privatliv/' : 'https://studio.umage.ai/privacy/';
+  const want = { [studioPage]: 1, 'https://umage.ai': 1, [privacyPage]: 1 };
   ok('About: links to the studio page, umage.ai and the privacy policy, none to GitHub', Object.keys(want).every(h => AM.links.some(l => l.href === h)) && AM.links.every(l => /^https:\/\//.test(l.href) && !/github/.test(l.href)), AM.links.map(l => l.href));
   ok('About: every link opens a new tab (rel=noopener)', AM.links.length >= 4 && AM.links.every(l => l.target === '_blank' && /noopener/.test(l.rel)), AM.links.filter(l => l.target !== '_blank' || !/noopener/.test(l.rel)));
   ok('About: the umage.ai logos load and each one links to umage.ai or studio.umage.ai', AM.imgs.length >= 2 && AM.imgs.every(i => i.ok && i.link && /^assets\/brand\/umage-ai-/.test(i.src)), AM.imgs);

@@ -48,7 +48,7 @@ server {
     root $ROOT;
     index index.html;
 
-    # own logs; Ubuntu's logrotate keeps /var/log/nginx/*.log for 14 days (stated in privacy.html)
+    # own logs; Ubuntu's logrotate keeps /var/log/nginx/*.log for 14 days (stated in the studio privacy policy, studio.umage.ai/privacy/)
     access_log /var/log/nginx/$NAME.access.log;
     error_log /var/log/nginx/$NAME.error.log;
 

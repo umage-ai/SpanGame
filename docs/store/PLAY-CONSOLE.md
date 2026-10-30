@@ -21,13 +21,13 @@ A checklist for publishing `ai.umage.span`, with suggested answers. The app fact
 | Category | Game → Puzzle |
 | Contact email | the address players and Google should use (required) |
 | Website | https://span.studio.umage.ai/ |
-| Privacy policy | https://span.studio.umage.ai/privacy.html |
+| Privacy policy | https://studio.umage.ai/privacy/ |
 
 ## App content (Policy → App content)
 
 | Form | Answer |
 |---|---|
-| **Privacy policy** | https://span.studio.umage.ai/privacy.html |
+| **Privacy policy** | https://studio.umage.ai/privacy/ |
 | **Ads** | No, the app has no ads |
 | **App access** | All functionality is available without special access (no login) |
 | **Content rating** (IARC questionnaire) | Category *Game*. No violence against characters, no fear, sex, language, drugs or gambling. No user interaction or sharing, no purchases. Vehicles falling into water when a bridge fails is cartoon-style with no injury shown. Expect **Everyone / PEGI 3** |

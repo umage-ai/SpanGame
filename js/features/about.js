@@ -16,6 +16,8 @@
   const STUDIO = 'umage.ai Studio';                      // the brand name is never translated
   const STUDIO_PAGE = { en: 'https://studio.umage.ai/games/span/', da: 'https://studio.umage.ai/da/spil/span/' };
   const SITE = 'https://span.studio.umage.ai/';
+  // the shared privacy policy of all umage.ai Studio games (span.studio.umage.ai/privacy.html forwards there)
+  const PRIVACY = { en: 'https://studio.umage.ai/privacy/', da: 'https://studio.umage.ai/da/privatliv/' };
   const LOGO = 'assets/brand/umage-ai-logo-white.svg';   // 160.48 x 57.08: "umage." over "ai"
   const MARK = 'assets/brand/umage-ai-mark.svg';
   const EXT = 'target="_blank" rel="noopener"';
@@ -62,7 +64,9 @@
   function icon(name, cls) {
     return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[name] || '') + '</svg>';
   }
-  function studioUrl() { return I() && I().lang && I().lang() === 'da' ? STUDIO_PAGE.da : STUDIO_PAGE.en; }
+  const da = () => !!(I() && I().lang && I().lang() === 'da');
+  function studioUrl() { return da() ? STUDIO_PAGE.da : STUDIO_PAGE.en; }
+  function privacyUrl() { return da() ? PRIVACY.da : PRIVACY.en; }
   // the umage.ai Studio lockup: logo first, then the STUDIO badge (the brand name, not translated)
   function lockup(cls, h) {
     return '<span class="studio-lockup ' + cls + '-lockup">' + logoImg(cls + '-logo', h) + '<span class="studio-badge" aria-hidden="true">STUDIO</span></span>';
@@ -77,12 +81,12 @@
     return [
       { id: 'studio', href: studioUrl(), ico: 'ext', primary: true },
       { id: 'umage', href: UMAGE, ico: 'ext' },
-      { id: 'privacy', href: SITE + 'privacy.html', ico: 'book' },
+      { id: 'privacy', href: privacyUrl(), ico: 'book' },
     ];
   }
 
   const About = BG.About = {
-    UMAGE, STUDIO, SITE, studioUrl, links, daysBetween,
+    UMAGE, STUDIO, SITE, studioUrl, privacyUrl, links, daysBetween,
     open: () => open(),
     close: () => close(),
     isOpen: () => !!(el.modal && el.modal.classList.contains('show')),
