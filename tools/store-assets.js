@@ -1,5 +1,5 @@
 // native: renders the Google Play store graphics from the real game (docs/store/PLAY-CONSOLE.md). Headless only.
-// Usage: node tools/store-assets.js [--out dir] [--only phone,tablet7,tablet10,feature,icon] [--lang en|da]
+// Usage: node tools/store-assets.js [--out dir] [--only phone,tablet7,tablet10,feature,cover,icon] [--lang en|da]
 //   default out: docs/store/screenshots (en) or docs/store/screenshots-da
 // Phone and tablet screenshots are landscape (the game's best orientation) at 16:9 / 16:10, inside Google Play's
 // limits (each side 320-3840 px, the long side at most twice the short side). The scenes reuse tools/screenshots.js
@@ -81,12 +81,13 @@ async function deviceSet(device, scenes) {
 }
 
 // 1024 x 500: the title scene without its buttons and chips (logo, tagline and the live demo bridge)
-async function featureGraphic() {
-  console.log('feature');
-  const page = await shots.newPage({ viewport: { width: 1024, height: 500 }, deviceScaleFactor: 1, locale: LANG === 'da' ? 'da-DK' : 'en-US' }, 'noresume' + langQ);
+// (also the itch.io cover, 630 x 500: --only cover)
+async function featureGraphic(w, h, file) {
+  console.log(file);
+  const page = await shots.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1, locale: LANG === 'da' ? 'da-DK' : 'en-US' }, 'noresume' + langQ);
   await page.addStyleTag({ content: '#screen-title button, #screen-title .chip, .title-buttons, .title-foot, .title-meta { visibility: hidden !important; }' });
   await shots.run(page, 6);
-  await save(page, 'feature-graphic.jpg');
+  await save(page, file);
   await page._ctx.close();
 }
 
@@ -97,7 +98,8 @@ async function featureGraphic() {
   if (want('phone')) await deviceSet('phone', ['title', 'hero', 'levels', 'train', 'jungle', 'famous']);
   if (want('tablet7')) await deviceSet('tablet7', ['title', 'hero', 'levels', 'train']);
   if (want('tablet10')) await deviceSet('tablet10', ['title', 'hero', 'levels', 'train']);
-  if (want('feature')) await featureGraphic();
+  if (want('feature')) await featureGraphic(1024, 500, 'feature-graphic.jpg');
+  if (want('cover')) await featureGraphic(630, 500, 'itch-cover.jpg');
   if (want('icon')) {
     const file = path.join(OUT, 'icon-512.png');
     fs.copyFileSync(path.join(ROOT, 'assets', 'icons', 'app', 'icon-512.png'), file);

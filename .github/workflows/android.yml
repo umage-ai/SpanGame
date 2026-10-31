@@ -1,6 +1,6 @@
 # native: builds the Android app from the current game (docs/NATIVE.md).
 #  - pull requests that touch the app or its bundle step: a debug APK as a workflow artifact
-#  - a published GitHub release: the release AAB (for Google Play) and APK, attached to that release
+#  - a published GitHub release: the release AAB (for Google Play), APK and the itch.io web zip, attached to that release
 #  - manual runs: both
 # The Gradle build bundles the game itself (tools/build-web-bundle.js), so the app always matches the release's PWA.
 # Release signing (optional; without it the release files are unsigned) comes from these repository secrets:
@@ -76,6 +76,7 @@ jobs:
           [ -f android/app/build/outputs/apk/debug/app-debug.apk ] && cp android/app/build/outputs/apk/debug/app-debug.apk "out/span-$V-debug.apk"
           [ -f android/app/build/outputs/bundle/release/app-release.aab ] && cp android/app/build/outputs/bundle/release/app-release.aab "out/span-$V.aab"
           for f in android/app/build/outputs/apk/release/*.apk; do [ -f "$f" ] && cp "$f" "out/span-$V.apk"; done
+          node tools/itch.js "out/span-$V-web.zip"   # the itch.io HTML5 upload (docs/store/ITCH.md)
           ls -la out
 
       - uses: actions/upload-artifact@v4
@@ -87,4 +88,4 @@ jobs:
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" out/span-*.aab out/span-*.apk --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" out/span-*.aab out/span-*.apk out/span-*-web.zip --clobber

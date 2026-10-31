@@ -27,6 +27,7 @@ npm run android:debug      # android/app/build/outputs/apk/debug/app-debug.apk  
 npm run android:release    # android/app/build/outputs/bundle/release/app-release.aab  (+ apk/release/), signed if a key is set
 node tools/android.js <gradle tasks>    # anything else, e.g. installDebug
 npm run bundle:web -- <dir>             # only the web bundle (also what the iOS build will use)
+npm run bundle:itch                     # dist/span-<version>-web.zip, the itch.io HTML5 upload (docs/store/ITCH.md)
 ```
 
 - **Version:** `versionName` is `package.json`'s `version`. `versionCode` is major × 10000 + minor × 100 + patch (1.4.0 → 10400). Google Play needs a higher code for every upload, so bump `package.json` with every release. If you have to re-upload the same version, override it with `-PversionCode=N` or `SPAN_VERSION_CODE`.

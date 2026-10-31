@@ -1,5 +1,5 @@
 // pwa: BG.PWA - installable / offline shell for SPAN.
-//  - registers sw.js, but only over http(s); on file:// and inside the native app shells (window.SpanNative,
+//  - registers sw.js, but only over http(s) and not inside an iframe (itch.io); on file:// and inside the native app shells (window.SpanNative,
 //    docs/NATIVE.md: the app ships its files, so it needs no worker) it does nothing (the game still runs)
 //  - "New version available - tap to reload" toast when an updated worker is waiting
 //  - one-time "ready to play offline" toast after the first install
@@ -11,7 +11,9 @@
   const doc = root.document;
   const nav = root.navigator || {};
   const native = !!root.SpanNative;
-  const supported = !!(doc && !native && /^https?:$/.test(root.location && root.location.protocol) && 'serviceWorker' in nav);
+  // inside an iframe (itch.io, an embed) the page can't be installed and the host owns caching: no worker there either
+  const framed = (() => { try { return root.top !== root; } catch (e) { return true; } })();
+  const supported = !!(doc && !native && !framed && /^https?:$/.test(root.location && root.location.protocol) && 'serviceWorker' in nav);
   const UPDATE_CHECK_MS = 30 * 60 * 1000;
   const OFFLINE_FLAG = 'span.pwa.offlineReady';
 
