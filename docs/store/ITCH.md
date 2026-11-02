@@ -13,7 +13,7 @@ SPAN on itch.io is the web game as an HTML5 upload, played in the browser on the
 | Field | Value |
 |---|---|
 | Title | SPAN: Bridge Builder |
-| Project URL | `<account>.itch.io/span` |
+| Project URL | `umage-ai.itch.io/span-bridge-builder` (live) |
 | Short description or tagline | Build bridges, test them with real physics, and don't drop the bus. |
 | Classification | Games |
 | Kind of project | HTML (*You have a ZIP or HTML file that will be played in the browser*) |
