@@ -5,6 +5,7 @@
 # The Gradle build bundles the game itself (tools/build-web-bundle.js), so the app always matches the release's PWA.
 # Release signing (optional; without it the release files are unsigned) comes from these repository secrets:
 #   ANDROID_KEYSTORE_BASE64 (base64 of the upload keystore), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# itch.io push (optional): secret BUTLER_API_KEY and variable ITCH_TARGET (<user>/<game>)
 name: Android app
 
 on:
@@ -89,3 +90,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" out/span-*.aab out/span-*.apk out/span-*-web.zip --clobber
+
+      # itch.io: the web zip replaces the browser build on the itch.io page (channel html5, keeps its "played in the
+      # browser" setting). Needs the BUTLER_API_KEY secret (itch.io → Settings → API keys) and the ITCH_TARGET
+      # variable (<user>/<game>); without them the step does nothing.
+      - name: Push to itch.io
+        if: github.event_name == 'release'
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_TARGET" ]; then echo "itch.io: BUTLER_API_KEY or ITCH_TARGET not set, skipped"; exit 0; fi
+          V=$(node -p "require('./package.json').version")
+          curl -sSfL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d butler && chmod +x butler/butler
+          ./butler/butler push "out/span-$V-web.zip" "$ITCH_TARGET:html5" --userversion "$V"

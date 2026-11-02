@@ -6,7 +6,7 @@ SPAN on itch.io is the web game as an HTML5 upload, played in the browser on the
 
 - `npm run bundle:itch` writes `dist/span-<version>-web.zip`: the same files as the app bundles, with `index.html` at the root of the zip and no `sw.js`. Every published GitHub release also attaches it (the *Android app* workflow).
 - itch.io runs the game in an iframe on its own CDN. `js/features/pwa.js` registers no service worker inside an iframe, and the moved banner only shows on the old GitHub Pages address. Saves use `localStorage` on itch.io's game origin, so they survive new uploads but are separate from span.studio.umage.ai.
-- To update: upload the new zip and delete the old one, or use butler (`butler push dist/span-<version>-web.zip <user>/span:html5`).
+- Updates are automatic: on every published release the *Android app* workflow pushes the zip with butler to the `html5` channel (secret `BUTLER_API_KEY`, variable `ITCH_TARGET` = `<user>/<game>`). By hand: upload the new zip and delete the old one, or `butler push dist/span-<version>-web.zip <user>/<game>:html5`.
 
 ## Create new project
 
