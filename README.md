@@ -6,6 +6,7 @@
 
 ### ▶ [Play SPAN in your browser](https://span.studio.umage.ai/)
 Free, no install. Works on desktop, tablet and phone, and can be installed as an app that plays offline.
+Also on [Google Play](https://play.google.com/store/apps/details?id=ai.umage.span) and [itch.io](https://umage-ai.itch.io/span-bridge-builder).
 
 **Build a bridge, send the traffic across, and watch real physics decide whether it holds.**
 
@@ -200,7 +201,7 @@ Served over http(s), SPAN is an installable Progressive Web App:
 
 Opened from `file://` the game plays exactly the same, just without install and offline caching (browsers only run service workers on https and localhost).
 
-**Android app:** `npm run android:debug` builds an APK, and `npm run android:release` builds the Google Play bundle. The app is a thin WebView shell around the same game files, which are copied in on every build, so it always matches the web version. See [docs/NATIVE.md](docs/NATIVE.md). An iOS app built the same way is planned.
+**Android app:** `npm run android:debug` builds an APK, and `npm run android:release` builds the Google Play bundle. The app is a thin WebView shell around the same game files, which are copied in on every build, so it always matches the web version. See [docs/NATIVE.md](docs/NATIVE.md). It is live on [Google Play](https://play.google.com/store/apps/details?id=ai.umage.span). An iOS app built the same way is planned.
 
 ## Languages
 

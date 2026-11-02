@@ -41,7 +41,7 @@ SPAN on itch.io is the web game as an HTML5 upload, played in the browser on the
 | Genre | Puzzle |
 | Tags (up to 10) | bridge, physics, puzzle, engineering, construction, trains, 2d, casual, singleplayer, touch-friendly |
 | AI generation disclosure | **Yes**: code and text written by AI agents (Claude Code), backgrounds generated with local AI (ComfyUI, Qwen-Image). Sprites are drawn in code and sounds synthesized in code, both by the agents |
-| App store links | Google Play (`https://play.google.com/store/apps/details?id=ai.umage.span`) once the app is public |
+| App store links | Google Play: `https://play.google.com/store/apps/details?id=ai.umage.span` |
 | Custom noun | leave empty |
 | Community | Comments |
 | Visibility | Draft while testing, then Public |

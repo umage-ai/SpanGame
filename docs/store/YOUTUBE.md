@@ -24,7 +24,7 @@ To make it again from the current game: `npm run teaser -- --music <file>` write
 | License | Standard YouTube License |
 | Comments | On |
 | End screen | from 0:33: a subscribe element and a link to the itch.io page or the channel's playlist (external links need YouTube Partner Program) |
-| Visibility | Public, or Unlisted to embed on studio.umage.ai and itch.io first |
+| Visibility | Public (live) |
 
 ### Tags
 
@@ -40,6 +40,7 @@ Bridge the gap. Mind the budget. Don't drop the bus.
 SPAN is a free physics bridge-building puzzle game. Build a bridge from road, wood, steel, rope and cable, stay under budget, then press Test and watch cars, buses, trains and 60-tonne haulers drive across. Every member bends, stretches and can snap: real physics decides whether your bridge holds.
 
 ▶ Play free in your browser: https://span.studio.umage.ai
+▶ On Android (Google Play): https://play.google.com/store/apps/details?id=ai.umage.span
 ▶ On itch.io: https://umage-ai.itch.io/span-bridge-builder
 
 • 102 hand-made levels: roads, the Iron Road railway campaign and 12 famous bridges to rebuild, from the Pont du Gard to the Golden Gate
@@ -53,4 +54,3 @@ More games: https://studio.umage.ai
 #bridgebuilder #physicspuzzle #indiegame
 ```
 
-Add the Google Play link (`https://play.google.com/store/apps/details?id=ai.umage.span`) under the two ▶ lines once the app is public.
