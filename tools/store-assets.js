@@ -1,5 +1,5 @@
 // native: renders the Google Play store graphics from the real game (docs/store/PLAY-CONSOLE.md). Headless only.
-// Usage: node tools/store-assets.js [--out dir] [--only phone,tablet7,tablet10,feature,cover,icon] [--lang en|da]
+// Usage: node tools/store-assets.js [--out dir] [--only phone,tablet7,tablet10,desktop,feature,cover,boxart,poster,icon] [--lang en|da]
 //   default out: docs/store/screenshots (en) or docs/store/screenshots-da
 // Phone and tablet screenshots are landscape (the game's best orientation) at 16:9 / 16:10, inside Google Play's
 // limits (each side 320-3840 px, the long side at most twice the short side). The scenes reuse tools/screenshots.js
@@ -25,6 +25,7 @@ const DEVICES = {
   phone: touch(800, 450, 2.4, UA_ANDROID),     // 1920 x 1080
   tablet7: touch(960, 600, 2, UA_TABLET),       // 1920 x 1200
   tablet10: touch(1280, 800, 2, UA_TABLET),     // 2560 x 1600
+  desktop: { viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1.5, locale: LANG === 'da' ? 'da-DK' : 'en-US' }, // 1920 x 1080 (Microsoft Store)
 };
 const langQ = LANG === 'en' ? '' : '&lang=' + LANG;
 const written = [];
@@ -82,9 +83,10 @@ async function deviceSet(device, scenes) {
 
 // 1024 x 500: the title scene without its buttons and chips (logo, tagline and the live demo bridge)
 // (also the itch.io cover, 630 x 500: --only cover)
-async function featureGraphic(w, h, file) {
+// (Microsoft Store box art 1080 x 1080 and poster art 1440 x 2160: --only boxart,poster; scale renders them sharp)
+async function featureGraphic(w, h, file, scale) {
   console.log(file);
-  const page = await shots.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1, locale: LANG === 'da' ? 'da-DK' : 'en-US' }, 'noresume' + langQ);
+  const page = await shots.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: scale || 1, locale: LANG === 'da' ? 'da-DK' : 'en-US' }, 'noresume' + langQ);
   await page.addStyleTag({ content: '#screen-title button, #screen-title .chip, .title-buttons, .title-foot, .title-meta { visibility: hidden !important; }' });
   await shots.run(page, 6);
   await save(page, file);
@@ -98,8 +100,11 @@ async function featureGraphic(w, h, file) {
   if (want('phone')) await deviceSet('phone', ['title', 'hero', 'levels', 'train', 'jungle', 'famous']);
   if (want('tablet7')) await deviceSet('tablet7', ['title', 'hero', 'levels', 'train']);
   if (want('tablet10')) await deviceSet('tablet10', ['title', 'hero', 'levels', 'train']);
+  if (want('desktop')) await deviceSet('desktop', ['title', 'hero', 'levels', 'train', 'famous']);
   if (want('feature')) await featureGraphic(1024, 500, 'feature-graphic.jpg');
   if (want('cover')) await featureGraphic(630, 500, 'itch-cover.jpg');
+  if (want('boxart')) await featureGraphic(540, 540, 'msstore-boxart-1x1.jpg', 2);
+  if (want('poster')) await featureGraphic(480, 720, 'msstore-poster-2x3.jpg', 3);
   if (want('icon')) {
     const file = path.join(OUT, 'icon-512.png');
     fs.copyFileSync(path.join(ROOT, 'assets', 'icons', 'app', 'icon-512.png'), file);
