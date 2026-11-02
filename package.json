@@ -38,7 +38,8 @@
     "android:release": "node tools/android.js bundleRelease assembleRelease",
     "bundle:web": "node tools/build-web-bundle.js",
     "bundle:itch": "node tools/itch.js",
-    "store:assets": "node tools/store-assets.js"
+    "store:assets": "node tools/store-assets.js",
+    "teaser": "node tools/teaser.js"
   },
   "engines": {
     "node": ">=18"
