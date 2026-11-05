@@ -22,12 +22,15 @@ A checklist for publishing `ai.umage.span`, with suggested answers. The app fact
 | Contact email | the address players and Google should use (required) |
 | Website | https://span.studio.umage.ai/ |
 | Privacy policy | https://studio.umage.ai/privacy/ |
+| Terms of service | https://studio.umage.ai/terms/ (umage.ai Studio's shared terms; Danish: https://studio.umage.ai/da/vilkaar/) |
 
 ## App content (Policy → App content)
 
 | Form | Answer |
 |---|---|
 | **Privacy policy** | https://studio.umage.ai/privacy/ |
+| **Terms of service** (where asked) | https://studio.umage.ai/terms/ |
+| **EU DSA trader status** (account-wide, Policy → *Account details*) | **Trader**: umage.ai ApS is a company account. One declaration covers the whole account, Prismwright included |
 | **Ads** | No, the app has no ads |
 | **App access** | All functionality is available without special access (no login) |
 | **Content rating** (IARC questionnaire) | Category *Game*. No violence against characters, no fear, sex, language, drugs or gambling. No user interaction or sharing, no purchases. Vehicles falling into water when a bridge fails is cartoon-style with no injury shown. Expect **Everyone / PEGI 3** |
