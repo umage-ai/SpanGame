@@ -11,7 +11,7 @@ PWABuilder (https://www.pwabuilder.com): enter `https://span.studio.umage.ai` �
 | Package ID | *Package/Identity/Name* from Partner Center → Product management → Product identity |
 | Publisher ID | *Package/Identity/Publisher* (`CN=…`) from the same page |
 | Publisher display name | *Package/Properties/PublisherDisplayName* from the same page |
-| App name | SPAN: Bridge Builder |
+| App name | **SPAN: Bridge Builder**, exactly the reserved name. PWABuilder pre-fills it with the manifest's short name "SPAN", and Partner Center rejects a package whose name doesn't match the reservation |
 | App version | `1.0.1` (the package's own number, not the game's; raise it for every new package) |
 | Classic package version | `1.0.0` (lower than the app version) |
 | Language | en-us |
