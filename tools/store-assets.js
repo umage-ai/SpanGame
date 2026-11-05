@@ -1,5 +1,6 @@
 // native: renders the Google Play store graphics from the real game (docs/store/PLAY-CONSOLE.md). Headless only.
-// Usage: node tools/store-assets.js [--out dir] [--only phone,tablet7,tablet10,desktop,feature,cover,boxart,poster,icon] [--lang en|da]
+// Usage: node tools/store-assets.js [--out dir] [--only phone,tablet7,tablet10,desktop,feature,cover,boxart,poster,trailerthumb,icon] [--lang en|da] [--png]
+//   --png writes PNG instead of JPEG (the Microsoft Store takes only PNG; docs/store/msstore-submission.md)
 //   default out: docs/store/screenshots (en) or docs/store/screenshots-da
 // Phone and tablet screenshots are landscape (the game's best orientation) at 16:9 / 16:10, inside Google Play's
 // limits (each side 320-3840 px, the long side at most twice the short side). The scenes reuse tools/screenshots.js
@@ -15,6 +16,7 @@ const args = process.argv.slice(2);
 const argVal = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const LANG = argVal('--lang') || 'en';
 const OUT = path.resolve(argVal('--out') || path.join(ROOT, 'docs', 'store', LANG === 'en' ? 'screenshots' : 'screenshots-' + LANG));
+const PNG = args.includes('--png');
 const ONLY = argVal('--only') ? argVal('--only').split(',') : null;
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -31,8 +33,8 @@ const langQ = LANG === 'en' ? '' : '&lang=' + LANG;
 const written = [];
 
 async function save(page, name) {
-  const file = path.join(OUT, name);
-  await page.screenshot({ path: file, type: 'jpeg', quality: 88 }); // Google Play takes JPEG or 24-bit PNG; JPEG keeps the repo small
+  const file = path.join(OUT, PNG ? name.replace(/\.jpg$/, '.png') : name);
+  await page.screenshot(PNG ? { path: file, type: 'png' } : { path: file, type: 'jpeg', quality: 88 }); // Google Play takes JPEG or 24-bit PNG; JPEG keeps the repo small
   written.push(file);
   console.log('  ' + path.relative(ROOT, file) + '  ' + Math.round(fs.statSync(file).size / 1024) + ' KB');
 }
@@ -105,6 +107,7 @@ async function featureGraphic(w, h, file, scale) {
   if (want('cover')) await featureGraphic(630, 500, 'itch-cover.jpg');
   if (want('boxart')) await featureGraphic(540, 540, 'msstore-boxart-1x1.jpg', 2);
   if (want('poster')) await featureGraphic(480, 720, 'msstore-poster-2x3.jpg', 3);
+  if (want('trailerthumb')) await featureGraphic(1280, 720, 'trailer-thumbnail-1920x1080.jpg', 1.5); // the Microsoft Store trailer's key art
   if (want('icon')) {
     const file = path.join(OUT, 'icon-512.png');
     fs.copyFileSync(path.join(ROOT, 'assets', 'icons', 'app', 'icon-512.png'), file);
